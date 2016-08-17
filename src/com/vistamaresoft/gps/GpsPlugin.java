@@ -81,6 +81,7 @@ public class GpsPlugin extends Plugin implements Listener
 		info.setPivot(PivotPosition.Center);
 
 		player.addGuiElement(info);
+		player.setAttribute(key_gpsInfoLabel, info);
 		player.setAttribute(key_gpsInfoGUI, true);	// whether the GPS text is shown or not
 		player.setAttribute(key_gpsHomeGUI, false);	// whether the home info is shown or not
 		player.setAttribute(key_gpsWpGUI, 0);		// which waypoint is shown, if any (0 = none)
@@ -166,7 +167,7 @@ public class GpsPlugin extends Plugin implements Listener
 			teleportToWp(player, homeWp);
 	}
 
-				// onPlayerChangePosition
+	// onPlayerChangePosition
 	//
 	// called when the player changes of world position.
 	// Note: change of view direction without any actual displacement
