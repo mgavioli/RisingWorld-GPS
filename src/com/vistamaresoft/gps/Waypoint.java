@@ -52,18 +52,16 @@ public class Waypoint
 		double	deltaN		= pos.z - playerPos.z;
 		double	deltaW		= pos.x - playerPos.x;
 		double	dist		= Math.sqrt(deltaN * deltaN + deltaW * deltaW);	// distance in blocks
-		double	radial;
 		if (dist < 4)			// if distance less than 2 m, data are unreliable, only output wp name
 			return  " | ---°  " + name.substring(0, GpsPlugin.nameDispLen) + "   <2m";
-		else
-		{
-			radial			= Math.acos(deltaN / dist) * GpsPlugin.rad2deg;
-			if (deltaW > 0)
-				radial 		= 360 - radial;		// for this adjustment,  see setGPSText() above
-			radial			= Math.floor(radial + 0.5);
-			if (radial == 0)
-				radial = 360;
-		}
+		double	radial;
+		radial			= Math.acos(deltaN / dist) * GpsPlugin.rad2deg;
+		if (deltaW > 0)
+			radial 		= 360 - radial;		// for this adjustment,  see setGPSText() above
+		radial			= Math.floor(radial + 0.5);
+		if (radial == 0)
+			radial = 360;
+
 		// text build up
 		double	wpHdgDelta	= playerHdg - radial;
 		String	text		= String.format("%03d°", radial);				// separator and radial

@@ -57,7 +57,7 @@ public class GpsPlugin extends Plugin implements Listener
 	public void onEnable()
 	{
 		Db.dbInit();							// init DB, if required
-//		System.out.println(msg_init);
+		System.out.println(Msgs.msg_init);
 		Plugin.registerEventListener(this);
 	}
 
@@ -74,14 +74,11 @@ public class GpsPlugin extends Plugin implements Listener
 	public void onPlayerConnect(PlayerConnectEvent event)
 	{
 		Player		player	= event.getPlayer();
-		// TODO : instantiate label!
 		GuiLabel	info	= new GuiLabel("", 0.5f, 0.1f, true);
 		info.setColor(0x0000007f);
 		info.setFontColor(0xFFFFFFFF);
 		info.setFontSize(18);
 		info.setPivot(PivotPosition.Center);
-//		info.setPosition(0.5f, 0.1f, true);
-//		info.setText("");
 
 		player.addGuiElement(info);
 		player.setAttribute(key_gpsInfoGUI, true);	// whether the GPS text is shown or not
@@ -153,7 +150,7 @@ public class GpsPlugin extends Plugin implements Listener
 			// "/gps setwp" has a variable number of parameters
 			if (cmd[1] == "setwp")
 			{
-				setWp(player, cmd[2], cmd[3]);
+				setWp(player, cmd.length > 2 ? cmd[2] : null, cmd.length > 3 ? cmd[3] : null);
 				return;
 			}
 
