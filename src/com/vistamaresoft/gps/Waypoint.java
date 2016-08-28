@@ -53,7 +53,7 @@ public class Waypoint
 		double	deltaW		= pos.x - playerPos.x;
 		double	dist		= Math.sqrt(deltaN * deltaN + deltaW * deltaW);	// distance in blocks
 		if (dist < 4)			// if distance less than 2 m, data are unreliable, only output wp name
-			return  " | ---°  " + name.substring(0, GpsPlugin.nameDispLen) + "   <2m";
+			return  " | ---°  " + name.substring(0, GpsPlugin.wpDispLen) + "   <2m";
 		double	radial;
 		radial			= Math.acos(deltaN / dist) * GpsPlugin.rad2deg;
 		if (deltaW > 0)
@@ -71,7 +71,7 @@ public class Waypoint
 		else
 			text += "  ";
 
-		text  += name.substring(0, GpsPlugin.nameDispLen);					// wp name
+		text  += name.substring(0, GpsPlugin.wpDispLen);					// wp name
 
 		if ( (wpHdgDelta < -GpsPlugin.wpHdgPrecis && wpHdgDelta > (GpsPlugin.wpHdgPrecis-180))	// right arrow
 				|| (wpHdgDelta < (360-GpsPlugin.wpHdgPrecis) && wpHdgDelta > (GpsPlugin.wpHdgPrecis+180)) )

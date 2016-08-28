@@ -12,12 +12,17 @@
 
 package com.vistamaresoft.gps;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 import net.risingworld.api.Plugin;
 import net.risingworld.api.events.EventMethod;
 import net.risingworld.api.events.Listener;
 import net.risingworld.api.events.player.PlayerChangePositionEvent;
 import net.risingworld.api.events.player.PlayerCommandEvent;
 import net.risingworld.api.events.player.PlayerConnectEvent;
+import net.risingworld.api.gui.Font;
 import net.risingworld.api.gui.GuiLabel;
 import net.risingworld.api.gui.PivotPosition;
 import net.risingworld.api.objects.Player;
@@ -25,16 +30,19 @@ import net.risingworld.api.utils.Vector3f;
 
 public class GpsPlugin extends Plugin implements Listener
 {
-	// Settings
-	static public	boolean	allowTpToWaypoints	= false;			// whether teleporting to waypoints (in addition to home) is possible or not
-	static public	int		nameDispLen			= 8;				// the max length of waypoint names to display on screen
-	static public	int		wpHdgPrecis			= 5;				// the waypoint radial delta below which route corrections arrows are not displayed
+	// Settings with their default values
+	static final public int		allowTpToWpDef		= 0;
+	static final public int		wpNameDispLenDef	= 8;
+	static final public int		wpHdgPrecisDef		= 5;
+	static public		boolean	allowTpToWp			= (allowTpToWpDef != 0);	// whether teleporting to waypoints (in addition to home) is possible or not
+	static public		int		wpDispLen			= wpNameDispLenDef;			// the max length of waypoint names to display on screen
+	static public		int		wpHdgPrecis			= wpHdgPrecisDef;			// the waypoint radial delta below which route corrections arrows are not displayed
 
 	// attribute keys
-	static final public String	key_gpsInfoGUI		= "gpsInfoGUI";
+	static final public String	key_gpsGUI			= "gpsGUI";
 	static final public String	key_gpsHomeGUI		= "gpsHomeGUI";
-	static final public String	key_gpsInfoLabel	= "gpsInfoLabel";
-	static final public String	key_gpsWaypoints	= "gpsWaypoints";
+	static final public String	key_gpsLabel		= "gpsLabel";
+	static final public String	key_gpsWpList		= "gpsWpList";
 	static final public String	key_gpsWpGUI		= "gpsWpGUI";
 
 	// Constants
@@ -56,6 +64,7 @@ public class GpsPlugin extends Plugin implements Listener
 	@Override
 	public void onEnable()
 	{
+		initSettings();
 		Db.dbInit();							// init DB, if required
 		System.out.println(Msgs.msg_init);
 		Plugin.registerEventListener(this);
@@ -76,13 +85,14 @@ public class GpsPlugin extends Plugin implements Listener
 		Player		player	= event.getPlayer();
 		GuiLabel	info	= new GuiLabel("", 0.5f, 0.1f, true);
 		info.setColor(0x0000007f);
+		info.setFont(Font.DefaultMono);
 		info.setFontColor(0xFFFFFFFF);
 		info.setFontSize(18);
 		info.setPivot(PivotPosition.Center);
 
 		player.addGuiElement(info);
-		player.setAttribute(key_gpsInfoLabel, info);
-		player.setAttribute(key_gpsInfoGUI, true);	// whether the GPS text is shown or not
+		player.setAttribute(key_gpsLabel, info);
+		player.setAttribute(key_gpsGUI, true);	// whether the GPS text is shown or not
 		player.setAttribute(key_gpsHomeGUI, false);	// whether the home info is shown or not
 		player.setAttribute(key_gpsWpGUI, 0);		// which waypoint is shown, if any (0 = none)
 
@@ -106,7 +116,7 @@ public class GpsPlugin extends Plugin implements Listener
 			{
 			case 1:
 				// if no sub-command, flip text display on/off
-				setGPSShow(player, !(boolean)player.getAttribute(key_gpsInfoGUI));
+				setGPSShow(player, !(boolean)player.getAttribute(key_gpsGUI));
 				return;
 			case 2:
 				switch (cmd[1])
@@ -188,11 +198,11 @@ public class GpsPlugin extends Plugin implements Listener
 
 	protected void setGpsText(Player player)
 	{
-		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsInfoLabel);
+		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsLabel);
 		if (labelgpsInfo == null)
 			return;
 
-		if ((boolean) player.getAttribute(key_gpsInfoGUI) )
+		if ((boolean) player.getAttribute(key_gpsGUI) )
 		{
 			// PLAYER ROTATION
 			Vector3f	playerRot	= player.getViewDirection();
@@ -220,7 +230,7 @@ public class GpsPlugin extends Plugin implements Listener
 			int			posH		= (int) Math.floor(playerPos.y);
 			// OUTPUT: home
 			String		text = "";
-			Waypoint	home		= ((Waypoint[])player.getAttribute(key_gpsWaypoints))[homeWp];
+			Waypoint	home		= ((Waypoint[])player.getAttribute(key_gpsWpList))[homeWp];
 			if ((boolean)player.getAttribute(key_gpsHomeGUI) && home != null)
 				text = home.toString(heading, playerPos) + " | ";
 			// main data
@@ -229,7 +239,7 @@ public class GpsPlugin extends Plugin implements Listener
 			int			wpToShow	= (int) player.getAttribute(key_gpsWpGUI);
 			if (wpToShow > 0)
 			{
-				Waypoint	wp		= ((Waypoint[])player.getAttribute(key_gpsWaypoints))[wpToShow];
+				Waypoint	wp		= ((Waypoint[])player.getAttribute(key_gpsWpList))[wpToShow];
 				if (wp != null)
 					text += " | " + wp.toString(heading, playerPos);
 			}
@@ -246,7 +256,7 @@ public class GpsPlugin extends Plugin implements Listener
 
 	protected void setGPSShow(Player player, boolean show)
 	{
-		player.setAttribute(key_gpsInfoGUI, show);
+		player.setAttribute(key_gpsGUI, show);
 		setGpsText(player);							// update displayed text
 	}
 
@@ -256,7 +266,7 @@ public class GpsPlugin extends Plugin implements Listener
 
 	protected void listWp(Player player)
 	{
-		Waypoint[]	waypoints = (Waypoint[]) player.getAttribute(key_gpsWaypoints);
+		Waypoint[]	waypoints = (Waypoint[]) player.getAttribute(key_gpsWpList);
 		player.sendTextMessage(Msgs.msg_wpList);
 		for (int i=minWp; i<= maxWp; i++)
 		{
@@ -303,7 +313,7 @@ public class GpsPlugin extends Plugin implements Listener
 		{
 			for (int i = minWpProper; i <= maxWp; i++)
 			{
-				Waypoint	wp	= ((Waypoint[])player.getAttribute(key_gpsWaypoints))[i];
+				Waypoint	wp	= ((Waypoint[])player.getAttribute(key_gpsWpList))[i];
 				if (wp == null || wp.name == null || wp.name == "")
 				{
 					idx = i;
@@ -338,7 +348,7 @@ public class GpsPlugin extends Plugin implements Listener
 			return;
 		}
 		// if not turning off (index = 0), check that waypoint exists
-		if (index > 0 && ((Waypoint[])player.getAttribute(key_gpsWaypoints))[index] == null)
+		if (index > 0 && ((Waypoint[])player.getAttribute(key_gpsWpList))[index] == null)
 		{
 			player.sendTextMessage(String.format(Msgs.err_showWpUndefinedWp, index));
 			return;
@@ -360,13 +370,13 @@ public class GpsPlugin extends Plugin implements Listener
 			return;
 		}
 		// check teleporting to waypoint is enabled
-		if (index > 0 && !allowTpToWaypoints)
+		if (index > 0 && !allowTpToWp)
 		{
 			player.sendTextMessage(Msgs.err_noTpToWp);
 			return;
 		}
 		// check that waypoint exists
-		Waypoint wp = ((Waypoint[])player.getAttribute(key_gpsWaypoints))[index];
+		Waypoint wp = ((Waypoint[])player.getAttribute(key_gpsWpList))[index];
 		if (wp == null)
 		{
 			player.sendTextMessage(String.format(Msgs.err_showWpUndefinedWp, index));
@@ -403,4 +413,27 @@ public class GpsPlugin extends Plugin implements Listener
 		return val;
 	}
 
+	// initSettings()
+	//
+	// initialises settings from settings file.
+
+	protected void initSettings()
+	{
+		// create and load settings from disk
+		Properties settings	= new Properties();
+		// NOTE : use getResourcesAsStream() if the setting file is included in the distrib. .jar)
+		FileInputStream in;
+		try {
+			in = new FileInputStream("settings.properties");
+			settings.load(in);
+			in.close();
+			// fill global values
+			allowTpToWp	= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0")) != 0;
+			wpDispLen			= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
+			wpHdgPrecis			= toInteger(settings.getProperty("wpHdgPrecis", Integer.toString(wpHdgPrecis)));
+		} catch (IOException e) {
+//			e.printStackTrace();
+			return;					// settings are init'ed anyway: on exception, do nothing
+		}
+	}
 }

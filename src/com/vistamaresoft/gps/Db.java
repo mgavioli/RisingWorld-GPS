@@ -75,7 +75,7 @@ public class Db
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		player.setAttribute(GpsPlugin.key_gpsWaypoints, waypoints);
+		player.setAttribute(GpsPlugin.key_gpsWpList, waypoints);
 	}
 
 	// setWp(player, wpIndex, wpName)
@@ -94,7 +94,7 @@ public class Db
 				);
 		// update player cache
 		Waypoint	wp			= new Waypoint(wpIndex, wpName, playerPos.x, playerPos.y, playerPos.z);
-		((Waypoint[])player.getAttribute(GpsPlugin.key_gpsWaypoints))[wpIndex]	= wp;
+		((Waypoint[])player.getAttribute(GpsPlugin.key_gpsWpList))[wpIndex]	= wp;
 
 		if (wpIndex == 0)
 			player.sendTextMessage(Msgs.msg_homeSet);
