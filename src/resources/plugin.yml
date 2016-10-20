@@ -1,0 +1,10 @@
+name: GPS
+main: com.vistamaresoft.gps.Gps
+version: 0.0.1
+author: Maurizio M. Gavioli aka Miwarre
+team: VistaMare Software
+description: "To aid the player in world navigation and positioning.
+Allows to set a home point and up to 9 waypoints; displays current
+player position and optionally distance and radial to home/waypoint."
+license: Creative Common by-sa
+website: http://www.vistamaresoft.com

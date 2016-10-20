@@ -2,7 +2,7 @@
 	G P S P l u g i n  -  A Java plug-in for Rising World.
 
 	Msgs.java - a data-only class with interface texts, separated for easier translation.
-	 			Might be replaced with gettext().
+	 			Eventually replaced by using Messages.getString().
 
 	Created by : Maurizio M. Gavioli 2016-08-15
 
@@ -16,16 +16,17 @@ package com.vistamaresoft.gps;
 public class Msgs
 {
 	// Error messages
-	static final public String	err_gspInvalidCmd		= "Invalid GPS command: '";
+	static final public String	err_invalidCmd			= "Invalid GPS command: '";
 	static final public String	err_noTpToWp			= "GPS got: teleport to waypoints is disabled";
 	static final public String	err_setWpDuplIdx		= "GPS setwp: duplicate index";
 	static final public String	err_setWpDuplName		= "GPS setwp: duplicate name";
-	static final public String	err_setWpInvalidIndex	= "GPS setwp: waypoint index must be an integer between "+GpsPlugin.minWpProper+" and "+GpsPlugin.maxWp;
-	static final public String	err_showWpInvalidIndex	= "GPS goto/wp: waypoint index must be an integer between "+GpsPlugin.minWp+" and "+GpsPlugin.maxWp;
+	static final public String	err_setWpInvalidIndex	= "GPS setwp: waypoint index must be an integer between "+Gps.minWpProper+" and "+Gps.maxWp;
+	static final public String	err_showWpInvalidIndex	= "GPS goto/wp: waypoint index must be an integer between "+Gps.minWp+" and "+Gps.maxWp;
 	static final public String	err_showWpUndefinedWp	= "GPS goto/wp: waypoint %d is undefined";
 
 	// Info messages
-	static final public String	msg_init		= "GPS loaded successfully! (version "+GpsPlugin.gpsVersion+")";
+	static final public String	msg_deinit		= "GPS "+Gps.version+" unloaded successfully!";
+	static final public String	msg_init		= "GPS "+Gps.version+" loaded successfully!";
 	static final public String	msg_homeSet		= "GPS: Home point set.";
 	static final public String	msg_wpList		= "GPS defined waypoints:";
 	static final public String	msg_wpSet		= "GPS: Waypoint %d '%s' set.";

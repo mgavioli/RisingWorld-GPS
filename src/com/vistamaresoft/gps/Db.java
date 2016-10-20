@@ -16,22 +16,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import net.risingworld.api.Plugin;
-import net.risingworld.api.database.WorldDatabase;
+import net.risingworld.api.database.Database;
 import net.risingworld.api.objects.Player;
 import net.risingworld.api.utils.Vector3f;
 
 public class Db
 {
 	// Globals
-	// TODO : replace with plug-in DB!
-	static	protected	WorldDatabase	db			= Plugin.getWorldDatabase();
+	static	protected	Database	db	= null;
 
 	//
-	//	init()
+	//	init() / deinit()
 	//
 	//	Initialises the DB. Can be run at each script startup without destroying existing data.
-	static void dbInit()
+	static void init(Plugin plugin)
 	{
+		if (db == null)
+			db = plugin.getSQLiteConnection(plugin.getPath() + "/gps-"+plugin.getWorld().getName()+".db");
+
 		db.execute(
 			"CREATE TABLE IF NOT EXISTS `waypoints` ("
 			+ "`player_name` CHAR(64) NOT NULL DEFAULT ('[NoName]'),"
@@ -43,16 +45,22 @@ public class Db
 			+ "PRIMARY KEY (player_name, wp_id) "
 			+ ");");
 	}
+	static void deinit()
+	{
+		db.close();
+		db = null;
+	}
 
 	//
 	//	loadPlayer(player)
 	//
 	// Loads from the DB the Home/wp data for a player and caches them in player attributes
 
-	static void dbLoadPlayer(Player player)
+	static void loadPlayer(Player player)
 	{
 		ResultSet	result;
-		Waypoint	waypoints[]	= new Waypoint[GpsPlugin.maxWp+1];
+		Waypoint	waypoints[]	= new Waypoint[Gps.maxWp+1];
+		player.setAttribute(Gps.key_gpsWpList, waypoints);
 		try {
 			result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_name` = '" + player.getName() + "' ORDER BY `wp_id`;");
 			try {
@@ -68,14 +76,11 @@ public class Db
 									);
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		player.setAttribute(GpsPlugin.key_gpsWpList, waypoints);
 	}
 
 	// setWp(player, wpIndex, wpName)
@@ -93,8 +98,8 @@ public class Db
 				+playerName+"','"+wpName+"',"+wpIndex+","+playerPos.x+","+playerPos.y+","+playerPos.z+");"
 				);
 		// update player cache
-		Waypoint	wp			= new Waypoint(wpIndex, wpName, playerPos.x, playerPos.y, playerPos.z);
-		((Waypoint[])player.getAttribute(GpsPlugin.key_gpsWpList))[wpIndex]	= wp;
+		Waypoint	wp			= new Waypoint(wpIndex, wpName, playerPos.getX(), playerPos.getY(), playerPos.getZ());
+		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIndex]	= wp;
 
 		if (wpIndex == 0)
 			player.sendTextMessage(Msgs.msg_homeSet);

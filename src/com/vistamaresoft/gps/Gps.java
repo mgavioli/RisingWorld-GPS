@@ -1,7 +1,7 @@
 /****************************
-	G P S P l u g i n  -  A Java plug-in for Rising World.
+	G P S  -  A Java plug-in for Rising World.
 
-	GpsPlugin.java - The main plug-in class
+	Gps.java - The main plug-in class
 
 	Created by : Maurizio M. Gavioli 2016-08-15
 
@@ -16,38 +16,43 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+//import com.vistamaresoft.televator.Db;
+//import com.vistamaresoft.televator.Msgs;
+
 import net.risingworld.api.Plugin;
 import net.risingworld.api.events.EventMethod;
 import net.risingworld.api.events.Listener;
 import net.risingworld.api.events.player.PlayerChangePositionEvent;
 import net.risingworld.api.events.player.PlayerCommandEvent;
-import net.risingworld.api.events.player.PlayerConnectEvent;
+//import net.risingworld.api.events.player.PlayerConnectEvent;
+import net.risingworld.api.events.player.PlayerSpawnEvent;
 import net.risingworld.api.gui.Font;
 import net.risingworld.api.gui.GuiLabel;
 import net.risingworld.api.gui.PivotPosition;
 import net.risingworld.api.objects.Player;
 import net.risingworld.api.utils.Vector3f;
 
-public class GpsPlugin extends Plugin implements Listener
+public class Gps extends Plugin implements Listener
 {
 	// Settings with their default values
-	static final public int		allowTpToWpDef		= 0;
+	static final public boolean	allowTpToWpDef		= false;
 	static final public int		wpNameDispLenDef	= 8;
 	static final public int		wpHdgPrecisDef		= 5;
-	static public		boolean	allowTpToWp			= (allowTpToWpDef != 0);	// whether teleporting to waypoints (in addition to home) is possible or not
-	static public		int		wpDispLen			= wpNameDispLenDef;			// the max length of waypoint names to display on screen
-	static public		int		wpHdgPrecis			= wpHdgPrecisDef;			// the waypoint radial delta below which route corrections arrows are not displayed
+	static public		String	commandPrefix		= "/gps";
+	static public		boolean	allowTpToWp			= allowTpToWpDef;	// whether teleporting to waypoints (in addition to home) is possible or not
+	static public		int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
+	static public		int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
 
 	// attribute keys
-	static final public String	key_gpsGUI			= "gpsGUI";
-	static final public String	key_gpsHomeGUI		= "gpsHomeGUI";
+	static final public String	key_gpsShow			= "gpsShow";
+	static final public String	key_gpsHomeShow		= "gpsHomeGUI";
 	static final public String	key_gpsLabel		= "gpsLabel";
 	static final public String	key_gpsWpList		= "gpsWpList";
-	static final public String	key_gpsWpGUI		= "gpsWpGUI";
+	static final public String	key_gpsWpShow		= "gpsWpGUI";
 
 	// Constants
 	static final public	double	rad2deg		= 180.0 / Math.PI;
-	static final public double	gpsVersion	= 0.1;
+	static final public double	version		= 0.1;
 	static final public int		homeWp		= 0;			// the index of the home waypoint
 	static final public int		maxWp		= 9;			// the max waypoint index
 	static final public int		minWp		= 0;			// the min waypoint index (including home)
@@ -65,25 +70,27 @@ public class GpsPlugin extends Plugin implements Listener
 	public void onEnable()
 	{
 		initSettings();
-		Db.dbInit();							// init DB, if required
+		Db.init(this);							// init DB, if required
 		System.out.println(Msgs.msg_init);
-		Plugin.registerEventListener(this);
+		registerEventListener(this);
 	}
 
 	@Override
 	public void onDisable()
 	{
-		// nothing to do
+		unregisterEventListener(this);
+		Db.deinit();
+		System.out.println(Msgs.msg_deinit);
 	}
 
 	// onPlayerConnect
 	//
 	// called when the player connects to the server (but has not entered the world yet)
 	@EventMethod
-	public void onPlayerConnect(PlayerConnectEvent event)
+	public void onPlayerSpawn(PlayerSpawnEvent event)
 	{
 		Player		player	= event.getPlayer();
-		GuiLabel	info	= new GuiLabel("", 0.5f, 0.1f, true);
+		GuiLabel	info	= new GuiLabel("", 0.5f, 0.15f, true);
 		info.setColor(0x0000007f);
 		info.setFont(Font.DefaultMono);
 		info.setFontColor(0xFFFFFFFF);
@@ -91,13 +98,13 @@ public class GpsPlugin extends Plugin implements Listener
 		info.setPivot(PivotPosition.Center);
 
 		player.addGuiElement(info);
-		player.setAttribute(key_gpsLabel, info);
-		player.setAttribute(key_gpsGUI, true);	// whether the GPS text is shown or not
-		player.setAttribute(key_gpsHomeGUI, false);	// whether the home info is shown or not
-		player.setAttribute(key_gpsWpGUI, 0);		// which waypoint is shown, if any (0 = none)
+		player.setAttribute(key_gpsLabel, info);		// the textual label with GPS data
+		player.setAttribute(key_gpsShow, true);			// whether the GPS text is shown or not
+		player.setAttribute(key_gpsHomeShow, false);	// whether the home info is shown or not
+		player.setAttribute(key_gpsWpShow, 0);			// which waypoint is shown, if any (0 = none)
 
-		Db.dbLoadPlayer(player);
-		setGpsText(player);							// set initially displayed text
+		Db.loadPlayer(player);
+		setGpsText(player);								// set initially displayed text
 	}
 
 	// onPlayerCommand
@@ -110,13 +117,13 @@ public class GpsPlugin extends Plugin implements Listener
 		Player		player	= event.getPlayer();
 		String[]	cmd		= event.getCommand().split(" ");
 
-		if (cmd[0].equals("/gps") )
+		if (cmd[0].equals(commandPrefix) )
 		{
 			switch(cmd.length)
 			{
 			case 1:
 				// if no sub-command, flip text display on/off
-				setGPSShow(player, !(boolean)player.getAttribute(key_gpsGUI));
+				setGPSShow(player, !(boolean)player.getAttribute(key_gpsShow));
 				return;
 			case 2:
 				switch (cmd[1])
@@ -131,7 +138,7 @@ public class GpsPlugin extends Plugin implements Listener
 					help(player);
 					return;
 				case "showhome":
-					player.setAttribute(key_gpsHomeGUI, !(boolean)player.getAttribute(key_gpsHomeGUI) );
+					player.setAttribute(key_gpsHomeShow, !(boolean)player.getAttribute(key_gpsHomeShow) );
 					setGpsText(player);				// update displayed text
 					return;
 				case "list":
@@ -159,21 +166,21 @@ public class GpsPlugin extends Plugin implements Listener
 			}
 
 			// "/gps setwp" has a variable number of parameters
-			if (cmd[1] == "setwp")
+			if (cmd[1].equals("setwp") )
 			{
 				setWp(player, cmd.length > 2 ? cmd[2] : null, cmd.length > 3 ? cmd[3] : null);
 				return;
 			}
 
 			// if the command was not processed so far => error
-			player.sendTextMessage(Msgs.err_gspInvalidCmd + event.getCommand() + "'");
+			player.sendTextMessage(Msgs.err_invalidCmd + event.getCommand() + "'");
 		}
 
 		// 2 commands added for compatibility with other common scripts
-		if (cmd[0] == "/sethome")
+		if (cmd[0].equals("/sethome") )
 			Db.setHome(player);
 
-		if (cmd[0] == "/home")
+		if (cmd[0].equals("/home") )
 			teleportToWp(player, homeWp);
 	}
 
@@ -202,7 +209,7 @@ public class GpsPlugin extends Plugin implements Listener
 		if (labelgpsInfo == null)
 			return;
 
-		if ((boolean) player.getAttribute(key_gpsGUI) )
+		if ((boolean) player.getAttribute(key_gpsShow) )
 		{
 			// PLAYER ROTATION
 			Vector3f	playerRot	= player.getViewDirection();
@@ -213,30 +220,48 @@ public class GpsPlugin extends Plugin implements Listener
 			// the x and z components are shortened: scale them up until
 			// they are the catheti of a triangle whose hypotenuse is long 1
 			double	scale			= Math.sqrt(rotX*rotX + rotZ*rotZ);
+			double heading;
+			if (scale < 0.00001)				// avoid division by 0
+				heading				= 0.0;
+			else
 			// get the heading angle and convert to degrees
-			double heading			= Math.acos(rotZ / scale) * rad2deg;
+				heading				= Math.acos(rotZ / scale) * rad2deg;
 			// hdg is correct from N (0°) through E (90°) to S (180°)
 			// then, when view is toward W, it decreases down to 0° again;
 			// when view is toward W, correct by taking the complementary angle
 			if (rotX > 0)			heading = 360 - heading;
 			// round to nearest integer and uniform 0° to 360°
-			heading	= Math.floor(heading + 0.5);
-			if (heading == 0)		heading = 360;
+			int		hdg				= (int)Math.floor(heading + 0.5);
+			if (hdg == 0)			hdg = 360;
 
 			// PLAYER POSITION
 			Vector3f	playerPos = player.getPosition();
 			int			posE		= (int) Math.floor(-playerPos.x);	// convert positive W to standard, positive E
 			int			posN		= (int) Math.floor(playerPos.z);
 			int			posH		= (int) Math.floor(playerPos.y);
+			// set N/S and E/W according to signs of coordinates
+			String		latDir		= "N,";
+			if (posN < 0)
+			{
+				posN	= -posN;
+				latDir	= "S,";
+			}
+			String		longDir		= "E) h";
+			if (posE < 0)
+			{
+				posE	= -posE;
+				longDir	= "W) h";
+			}
 			// OUTPUT: home
-			String		text = "";
-			Waypoint	home		= ((Waypoint[])player.getAttribute(key_gpsWpList))[homeWp];
-			if ((boolean)player.getAttribute(key_gpsHomeGUI) && home != null)
+			String		text		= "";
+			Waypoint[]	wps			= (Waypoint[])player.getAttribute(key_gpsWpList);
+			Waypoint	home;
+			if ((boolean)player.getAttribute(key_gpsHomeShow) && wps != null && (home=wps[homeWp]) != null)
 				text = home.toString(heading, playerPos) + " | ";
 			// main data
-			text	+= String.format("%03d°", heading) + " (" + posN + "N," + posE + "E) h" + posH;
+			text	+= String.format("%03d°", hdg) + " (" + posN + latDir + posE + longDir + posH;
 			// waypoint
-			int			wpToShow	= (int) player.getAttribute(key_gpsWpGUI);
+			int			wpToShow	= (int) player.getAttribute(key_gpsWpShow);
 			if (wpToShow > 0)
 			{
 				Waypoint	wp		= ((Waypoint[])player.getAttribute(key_gpsWpList))[wpToShow];
@@ -256,7 +281,7 @@ public class GpsPlugin extends Plugin implements Listener
 
 	protected void setGPSShow(Player player, boolean show)
 	{
-		player.setAttribute(key_gpsGUI, show);
+		player.setAttribute(key_gpsShow, show);
 		setGpsText(player);							// update displayed text
 	}
 
@@ -353,7 +378,7 @@ public class GpsPlugin extends Plugin implements Listener
 			player.sendTextMessage(String.format(Msgs.err_showWpUndefinedWp, index));
 			return;
 		}
-		player.setAttribute(key_gpsWpGUI, index);
+		player.setAttribute(key_gpsWpShow, index);
 		setGpsText(player);						// update displayed text
 	}
 
@@ -364,7 +389,7 @@ public class GpsPlugin extends Plugin implements Listener
 	protected void teleportToWp(Player player, Integer index)
 	{
 		// check index is there and is legal
-		if (index == null || index < minWpProper || index > maxWp)
+		if (index == null || index < minWp || index > maxWp)
 		{
 			player.sendTextMessage(Msgs.err_showWpInvalidIndex);
 			return;
@@ -398,17 +423,17 @@ public class GpsPlugin extends Plugin implements Listener
 
 	// toInteger(val)
 	//
-	// returns txt as an integer number if it can be interpreted as one or null if it cannot.
+	// returns txt as an integer number if it can be interpreted as one or 0 if it cannot.
 	 
 	public Integer toInteger(String txt)
 	{
 		if (txt == null)
-			return null;
+			return 0;
 		Integer val;
 		try {
 			val = Integer.parseInt(txt);
 		} catch (NumberFormatException e) {		// txt cannot be parsed as a number
-			return null;
+			return 0;
 		}
 		return val;
 	}
@@ -424,13 +449,14 @@ public class GpsPlugin extends Plugin implements Listener
 		// NOTE : use getResourcesAsStream() if the setting file is included in the distrib. .jar)
 		FileInputStream in;
 		try {
-			in = new FileInputStream("settings.properties");
+			in = new FileInputStream(getPath() + "/settings.properties");
 			settings.load(in);
 			in.close();
 			// fill global values
-			allowTpToWp	= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0")) != 0;
-			wpDispLen			= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
-			wpHdgPrecis			= toInteger(settings.getProperty("wpHdgPrecis", Integer.toString(wpHdgPrecis)));
+			commandPrefix	= "/" + settings.getProperty("command", commandPrefix);
+			allowTpToWp		= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0")) != 0;
+			wpDispLen		= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
+			wpHdgPrecis		= toInteger(settings.getProperty("wpHdgPrecis", Integer.toString(wpHdgPrecis)));
 		} catch (IOException e) {
 //			e.printStackTrace();
 			return;					// settings are init'ed anyway: on exception, do nothing

@@ -1,5 +1,5 @@
 /****************************
-	G P S P l u g i n  -  A Java plug-in for Rising World.
+	G P S  -  A Java plug-in for Rising World.
 
 	Waypoint.java - A waypoint
 
@@ -23,13 +23,11 @@ public class Waypoint
 
 	// C'TOR
 
-	Waypoint(int id, String name, float x, float y, float z)
+	public Waypoint(int id, String name, float x, float y, float z)
 	{
 		this.id		= id;
 		this.name	= name;
-		this.pos.setX(x);
-		this.pos.setY(y);
-		this.pos.setZ(z);
+		pos			= new Vector3f(x, y, z);
 	}
 
 	// toString()
@@ -39,9 +37,21 @@ public class Waypoint
 	{
 		if (name == null || name.length() < 1)		// undefined
 			return null;
-//		return ""+id+": "+name+" ("+Math.floor(pos.z)+"N,"+(-Math.floor(pos.x))+"E) h"+Math.floor(pos.y);	
-		return String.format("%d: %s (%dN,%dE) h%d",
-				id, name, (int)Math.floor(pos.z), -(int)Math.floor(pos.x), (int)Math.floor(pos.y) );	
+		float		n		= pos.z;
+		String		latDir	= "N";
+		float		e		= pos.x;
+		String		longDir	= "W";
+		if (n < 0.0f)
+		{
+			n		= -n;
+			latDir	= "S";
+		}
+		if (e < 0.0f)
+		{
+			e		= -e;
+			longDir	= "E";
+		}
+		return String.format("%d: %s (%.1f%s,%.1f%s) h%.1f", id, name, n, latDir, e, longDir, pos.y);	
 	}
 
 	// toString(double, Vector3f)
@@ -52,34 +62,35 @@ public class Waypoint
 		double	deltaN		= pos.z - playerPos.z;
 		double	deltaW		= pos.x - playerPos.x;
 		double	dist		= Math.sqrt(deltaN * deltaN + deltaW * deltaW);	// distance in blocks
+		String	shortName	= name.length() > Gps.wpDispLen ?  name.substring(0, Gps.wpDispLen) : name;
 		if (dist < 4)			// if distance less than 2 m, data are unreliable, only output wp name
-			return  " | ---°  " + name.substring(0, GpsPlugin.wpDispLen) + "   <2m";
+			return  " | ---°  " + shortName + "   <2m";
 		double	radial;
-		radial			= Math.acos(deltaN / dist) * GpsPlugin.rad2deg;
+		radial				= Math.acos(deltaN / dist) * Gps.rad2deg;
 		if (deltaW > 0)
-			radial 		= 360 - radial;		// for this adjustment,  see setGPSText() above
-		radial			= Math.floor(radial + 0.5);
-		if (radial == 0)
-			radial = 360;
+			radial 			= 360 - radial;		// for this adjustment,  see setGpsText() in Gps.java
+		int 	rdl			= (int)/*Math.floor*/(radial + 0.5);
+		if (rdl == 0)
+			rdl = 360;
 
 		// text build up
-		double	wpHdgDelta	= playerHdg - radial;
-		String	text		= String.format("%03d°", radial);				// separator and radial
-		if ( (wpHdgDelta > GpsPlugin.wpHdgPrecis && wpHdgDelta < (180-GpsPlugin.wpHdgPrecis))	// left arrow
-				|| (wpHdgDelta > (GpsPlugin.wpHdgPrecis-360) && wpHdgDelta < (-GpsPlugin.wpHdgPrecis-180)) )
+		double	wpHdgDelta	= playerHdg - rdl;
+		String	text		= String.format("%03d°", rdl);	// separator and radial
+		if ( (wpHdgDelta > Gps.wpHdgPrecis && wpHdgDelta < (180-Gps.wpHdgPrecis))	// left arrow
+				|| (wpHdgDelta > (Gps.wpHdgPrecis-360) && wpHdgDelta < (-Gps.wpHdgPrecis-180)) )
 			text += " <";
 		else
 			text += "  ";
 
-		text  += name.substring(0, GpsPlugin.wpDispLen);					// wp name
+		text  += shortName;
 
-		if ( (wpHdgDelta < -GpsPlugin.wpHdgPrecis && wpHdgDelta > (GpsPlugin.wpHdgPrecis-180))	// right arrow
-				|| (wpHdgDelta < (360-GpsPlugin.wpHdgPrecis) && wpHdgDelta > (GpsPlugin.wpHdgPrecis+180)) )
+		if ( (wpHdgDelta < -Gps.wpHdgPrecis && wpHdgDelta > (Gps.wpHdgPrecis-180))	// right arrow
+				|| (wpHdgDelta < (360-Gps.wpHdgPrecis) && wpHdgDelta > (Gps.wpHdgPrecis+180)) )
 			text += "> ";
 		else
 			text += "  ";
 
-		text += Math.floor(dist / 2 + 0.5) + "m";							// distance in m
+		text += Math.floor(dist / 2 + 0.5) + "m";			// distance in m
 		return text;
 	}
 }
