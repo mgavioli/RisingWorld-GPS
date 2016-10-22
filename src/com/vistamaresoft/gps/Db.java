@@ -25,10 +25,12 @@ public class Db
 	// Globals
 	static	protected	Database	db	= null;
 
-	//
-	//	init() / deinit()
-	//
-	//	Initialises the DB. Can be run at each script startup without destroying existing data.
+	/**
+		Initialises and opens the DB for this plug-in. Can be run at each
+		script startup without destroying existing data.
+
+	 	@param	plugin	the plug-in instance for which to initialise the DB.
+	 */
 	static void init(Plugin plugin)
 	{
 		if (db == null)
@@ -51,11 +53,12 @@ public class Db
 		db = null;
 	}
 
-	//
-	//	loadPlayer(player)
-	//
-	// Loads from the DB the Home/wp data for a player and caches them in player attributes
+	/**
+		Loads from the DB the Home/way-point data for a player and caches them
+		in player attributes.
 
+	 	@param	player	the target player.
+	*/
 	static void loadPlayer(Player player)
 	{
 		ResultSet	result;
@@ -83,11 +86,15 @@ public class Db
 		}
 	}
 
-	// setWp(player, wpIndex, wpName)
-	//
-	// Inserts into the DB (or replace if already present) data for a waypoint,
-	// also updating the player attribute cache
+	/**
+		Inserts into the DB (or replace if already present) data for a
+		way-point at current player position, also updating the player
+		attribute cache.
 
+		@param	player	the affected player
+		@param	wpIndex	the index (0 - 9) of the new waypoint
+		@param	wpName	the name of the new way-point.
+	*/
 	static void setWp(Player player, int wpIndex, String wpName)
 	{
 		String		playerName	= player.getName();
@@ -107,6 +114,12 @@ public class Db
 			player.sendTextMessage(String.format(Msgs.msg_wpSet, wpIndex, wpName));
 	}
 
+	/**
+		Inserts into the DB (or replace if already present) Home data
+		at current player position, also updating the player attribute cache.
+
+		@param	player	the affected player
+	 */
 	static public void setHome(Player player)
 	{
 		setWp(player, 0, Msgs.txt_homeName);

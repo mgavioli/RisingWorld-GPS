@@ -31,10 +31,24 @@ public class Msgs
 	static final public String	msg_wpList		= "GPS defined waypoints:";
 	static final public String	msg_wpSet		= "GPS: Waypoint %d '%s' set.";
 
+	// GUI texts
+	static final public String	button_close	= "CLOSE";
+	static final public String	button_goto		= "GO\nTO";
+	static final public String	button_off		= "TURN OFF";
+	static final public String	button_on		= "TURN ON";
+	static final public String	button_homehide	= "HIDE\nHOME";
+	static final public String	button_homeset	= "SET\nHOME";
+	static final public String	button_homeshow	= "SHOW\nHOME";
+	static final public String	button_next		= " > ";
+	static final public String	button_prev		= " < ";
+	static final public String	button_wphide	= "HIDE\nWP";
+	static final public String	button_wpset	= "SET\nWP";
+	static final public String	button_wpshow	= "SHOW\nWP";
+
 	// Various texts
 	static final public String	txt_homeName	= "Home";
 	static final public String[]txt_help		= { "[#00ff40]GPS Help",
-			"[#00ff40]/gps [#ffffff]toggles whole GPS display on/off",
+			"[#00ff40]/gps [#ffffff]opens the GPS GUI",
 			"[#00ff40]/gps on [#ffffff]turns whole GPS display on",
 			"[#00ff40]/gps off [#ffffff]turns whole GPS display off",
 			"[#00ff40]/gps sethome [#ffffff]set home position to current position",
@@ -46,5 +60,6 @@ public class Msgs
 			"[#00ff40]/home [#ffffff]same of '/gps home' (for compatibility)",
 			"[#00ff40]/sethome [#ffffff]same as '/gps sethome' (for compatiblity)",
 			};
+	static final public String	txt_undefined	= "--[Undefined]--";
 
 }
