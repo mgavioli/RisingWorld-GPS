@@ -1,5 +1,5 @@
 /****************************
-	G P S P l u g i n  -  A Java plug-in for Rising World.
+	G P S  -  A Java plug-in for Rising World.
 
 	Db.java - The database management class
 
@@ -109,9 +109,9 @@ public class Db
 		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIndex]	= wp;
 
 		if (wpIndex == 0)
-			player.sendTextMessage(Msgs.msg_homeSet);
+			player.sendTextMessage(Msgs.msg[Msgs.msg_homeSet]);
 		else
-			player.sendTextMessage(String.format(Msgs.msg_wpSet, wpIndex, wpName));
+			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpSet], wpIndex, wpName));
 	}
 
 	/**
@@ -122,6 +122,6 @@ public class Db
 	 */
 	static public void setHome(Player player)
 	{
-		setWp(player, 0, Msgs.txt_homeName);
+		setWp(player, 0, Msgs.msg[Msgs.txt_homeName]);
 	}
 }

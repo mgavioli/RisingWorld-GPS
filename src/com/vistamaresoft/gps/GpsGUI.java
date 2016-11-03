@@ -82,6 +82,7 @@ public class GpsGUI extends GuiPanel
 	private	GuiLabel		buttWpShow;		// the "show waypoint" button
 	private int				currWp;			// the current wp displayed in the GUI
 	private GuiLabel		labelWp;		// the label with current way point data
+	private	GuiLabel		title;			// the title
 
 	public GpsGUI(Player player, float infoYPos)
 	{
@@ -96,14 +97,14 @@ public class GpsGUI extends GuiPanel
 		setVisible(false);
 		currWp				= 0;
 		// the title
-		GuiLabel	title	= new GuiLabel("G P S", TITLE_XPOS, TITLE_YPOS, false);
+		title		= new GuiLabel("G P S", TITLE_XPOS, TITLE_YPOS, false);
 		title.setPivot(PivotPosition.TopLeft);
 //		title.setFontColor(0x00FFFFFF);
 		title.setFontSize(TITLE_SIZE);
 		addChild(title);
 		player.addGuiElement(title);
 		// the main ON / OFF button
-		buttonOnOff			= new GuiLabel(ONOFF_XPOS, ONOFF_YPOS, false);
+		buttonOnOff	= new GuiLabel(ONOFF_XPOS, ONOFF_YPOS, false);
 		buttonOnOff.setPivot(PivotPosition.Center);
 		buttonOnOff.setColor(BUTTON_COLOUR);
 		buttonOnOff.setFontSize(BUTTON_SIZE);
@@ -116,7 +117,7 @@ public class GpsGUI extends GuiPanel
 		buttonPrev.setColor(BUTTON_COLOUR);
 		buttonPrev.setFontSize(BUTTON_SIZE);
 		buttonPrev.setClickable(true);
-		buttonPrev.setText(Msgs.button_prev);
+		buttonPrev.setText(Msgs.msg[Msgs.button_prev]);
 		addChild(buttonPrev);
 		player.addGuiElement(buttonPrev);
 		buttonNext	= new GuiLabel(NEXT_XPOS, NEXT_YPOS, false);
@@ -124,7 +125,7 @@ public class GpsGUI extends GuiPanel
 		buttonNext.setColor(BUTTON_COLOUR);
 		buttonNext.setFontSize(BUTTON_SIZE);
 		buttonNext.setClickable(true);
-		buttonNext.setText(Msgs.button_next);
+		buttonNext.setText(Msgs.msg[Msgs.button_next]);
 		addChild(buttonNext);
 		player.addGuiElement(buttonNext);
 		// Label for way point data
@@ -139,7 +140,7 @@ public class GpsGUI extends GuiPanel
 		buttonGoto.setColor(BUTTON_COLOUR);
 		buttonGoto.setFontSize(BUTTON_SIZE);
 		buttonGoto.setClickable(true);
-		buttonGoto.setText(Msgs.button_goto);
+		buttonGoto.setText(Msgs.msg[Msgs.button_goto]);
 		addChild(buttonGoto);
 		player.addGuiElement(buttonGoto);
 		// SET HOME button
@@ -148,7 +149,7 @@ public class GpsGUI extends GuiPanel
 		buttHomeSet.setColor(BUTTON_COLOUR);
 		buttHomeSet.setFontSize(BUTTON_SIZE);
 		buttHomeSet.setClickable(true);
-		buttHomeSet.setText(Msgs.button_homeset);
+		buttHomeSet.setText(Msgs.msg[Msgs.button_homeset]);
 		addChild(buttHomeSet);
 		player.addGuiElement(buttHomeSet);
 		// SHOW/HIDE HOME button
@@ -157,7 +158,7 @@ public class GpsGUI extends GuiPanel
 		buttHomeShow.setColor(BUTTON_COLOUR);
 		buttHomeShow.setFontSize(BUTTON_SIZE);
 		buttHomeShow.setClickable(true);
-		buttHomeShow.setText(Msgs.button_homeshow);
+		buttHomeShow.setText(Msgs.msg[Msgs.button_homeshow]);
 		addChild(buttHomeShow);
 		player.addGuiElement(buttHomeShow);
 		// SET WP button
@@ -166,7 +167,7 @@ public class GpsGUI extends GuiPanel
 		buttWpSet.setColor(BUTTON_COLOUR);
 		buttWpSet.setFontSize(BUTTON_SIZE);
 		buttWpSet.setClickable(true);
-		buttWpSet.setText(Msgs.button_wpset);
+		buttWpSet.setText(Msgs.msg[Msgs.button_wpset]);
 		addChild(buttWpSet);
 		player.addGuiElement(buttWpSet);
 		// SHOW WP button
@@ -175,7 +176,7 @@ public class GpsGUI extends GuiPanel
 		buttWpShow.setColor(BUTTON_COLOUR);
 		buttWpShow.setFontSize(BUTTON_SIZE);
 		buttWpShow.setClickable(true);
-		buttWpShow.setText(Msgs.button_wpshow);
+		buttWpShow.setText(Msgs.msg[Msgs.button_wpshow]);
 		addChild(buttWpShow);
 		player.addGuiElement(buttWpShow);
 		// HIDE WP button
@@ -184,7 +185,7 @@ public class GpsGUI extends GuiPanel
 		buttWpHide.setColor(BUTTON_COLOUR);
 		buttWpHide.setFontSize(BUTTON_SIZE);
 		buttWpHide.setClickable(true);
-		buttWpHide.setText(Msgs.button_wphide);
+		buttWpHide.setText(Msgs.msg[Msgs.button_wphide]);
 		addChild(buttWpHide);
 		player.addGuiElement(buttWpHide);
 		// CLOSE button
@@ -193,7 +194,7 @@ public class GpsGUI extends GuiPanel
 		buttonClose.setColor(BUTTON_COLOUR);
 		buttonClose.setFontSize(BUTTON_SIZE);
 		buttonClose.setClickable(true);
-		buttonClose.setText(Msgs.button_close);
+		buttonClose.setText(Msgs.msg[Msgs.button_close]);
 		addChild(buttonClose);
 		player.addGuiElement(buttonClose);
 	}
@@ -216,6 +217,7 @@ public class GpsGUI extends GuiPanel
 
 		@param	element	the element which has been clicked
 		@param	player	the player this panel refers to
+		@return	true if the GpsGUI is still visible, false if it is not
 	*/
 	public void click(GuiElement element, Player player)
 	{
@@ -263,6 +265,7 @@ public class GpsGUI extends GuiPanel
 		{
 			player.setMouseCursorVisible(false);
 			setVisible(false);
+			return;								// 'dialogue box' is no longer needed
 		}
 		else
 			return;
@@ -284,7 +287,7 @@ public class GpsGUI extends GuiPanel
 	{
 		// set global ON/OFF depending on GPS being OFF/ON
 		buttonOnOff.setText((boolean)player.getAttribute(Gps.key_gpsShow) ?
-				Msgs.button_off : Msgs.button_on);
+				Msgs.msg[Msgs.button_off] : Msgs.msg[Msgs.button_on]);
 
 		// the following controls depends upon HOME and/or the current wp being
 		// defined or not
@@ -307,7 +310,7 @@ public class GpsGUI extends GuiPanel
 			}
 			else
 			{
-				labelWp.setText("" + currWp + Msgs.txt_undefined);	// otherwise, show no data
+				labelWp.setText("" + currWp + Msgs.msg[Msgs.txt_undefined]);	// otherwise, show no data
 				buttonGoto.setColor(BUTTON_INACTIVE);	// and disable GOTO button
 				buttonGoto.setClickable(false);
 			}
@@ -315,7 +318,7 @@ public class GpsGUI extends GuiPanel
 			boolean	isDef	= (waypoints[0] != null);		// if HOME defined?
 			boolean isShown	= (boolean)player.getAttribute(Gps.key_gpsHomeShow);
 			// set HOME SHOW/HIDE text depending on home being currently shown or not
-			buttHomeShow.setText(isShown ? Msgs.button_homehide : Msgs.button_homeshow);
+			buttHomeShow.setText(isShown ? Msgs.msg[Msgs.button_homehide] : Msgs.msg[Msgs.button_homeshow]);
 			// enable/disable HOME SHOW/HIDE depending on home being defined or not
 			buttHomeShow.setColor(isDef ? BUTTON_COLOUR : BUTTON_INACTIVE);
 			buttHomeShow.setClickable(isDef ? true : false);
