@@ -21,6 +21,7 @@ import net.risingworld.api.events.EventMethod;
 import net.risingworld.api.events.Listener;
 import net.risingworld.api.events.player.PlayerChangePositionEvent;
 import net.risingworld.api.events.player.PlayerCommandEvent;
+import net.risingworld.api.events.player.PlayerConnectEvent;
 import net.risingworld.api.events.player.PlayerSpawnEvent;
 import net.risingworld.api.events.player.gui.PlayerGuiElementClickEvent;
 import net.risingworld.api.gui.Font;
@@ -56,7 +57,7 @@ public class Gps extends Plugin implements Listener
 
 	// CONSTANTS
 	static final public	double	rad2deg		= 180.0 / Math.PI;
-	static final public String	version		= "0.3.1";
+	static final public String	version		= "0.3.2";
 	static final public int		homeWp		= 0;			// the index of the home waypoint
 	static final public int		maxWp		= 15;			// the max waypoint index
 	static final public int		minWp		= 0;			// the min waypoint index (including home)
@@ -87,6 +88,17 @@ public class Gps extends Plugin implements Listener
 		System.out.println(Msgs.msg[Msgs.msg_deinit]);
 	}
 
+	/**
+		Called by Rising World when the player connects to a world and he spawns into it.
+
+		@param event	the connect event
+	*/
+	@EventMethod
+	public void onPlayerConnect(PlayerConnectEvent event)
+	{
+		initPlayer(event.getPlayer());
+	}
+
 	/** Called by Rising World when the player spawns into a world after having connected.
 	
 		@param	event	the spawn event
@@ -94,7 +106,7 @@ public class Gps extends Plugin implements Listener
 	@EventMethod
 	public void onPlayerSpawn(PlayerSpawnEvent event)
 	{
-		initPlayer(event.getPlayer());
+		setGpsText(event.getPlayer());
 	}
 
 	/**	Called when the player issues a command ("/...") in the chat window
@@ -213,7 +225,7 @@ public class Gps extends Plugin implements Listener
 		@param	player	the player for whom to toggle the GSP display
 	 	@param	show	true to show | false to hide
 	*/
-	static protected void setGPSShow(Player player, boolean show)
+	static public void setGPSShow(Player player, boolean show)
 	{
 		player.setAttribute(key_gpsShow, show);
 		setGpsText(player);							// update displayed text
@@ -358,7 +370,9 @@ public class Gps extends Plugin implements Listener
 	*/
 	static protected void setGpsText(Player player)
 	{
-		if (player == null || !player.hasAttribute(key_gpsLabel))
+		if (player == null)
+			return;
+		if (player.getAttribute(key_gpsLabel) == null)
 			return;
 		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsLabel);
 		if (labelgpsInfo == null)
@@ -436,7 +450,7 @@ public class Gps extends Plugin implements Listener
 
 	private void initPlayer(Player player)
 	{
-		if (!player.hasAttribute(key_gpsLabel))
+		if (player.getAttribute(key_gpsLabel) == null)
 		{
 			// The main textual GUI element showing the GPS data
 			GuiLabel	info	= new GuiLabel("", gpsXPosDef, gpsYPos, true);
@@ -445,8 +459,6 @@ public class Gps extends Plugin implements Listener
 			info.setFontColor(0xFFFFFFFF);
 			info.setFontSize(fontSize);
 			info.setPivot(PivotPosition.Center);
-			player.addGuiElement(info);
-			player.setAttribute(key_gpsLabel, info);
 	
 			// player attributes keeping track of status (whether the GPS data are shown or not
 			// and what they should contain)
@@ -455,7 +467,8 @@ public class Gps extends Plugin implements Listener
 			player.setAttribute(key_gpsWpShow, 0);			// which waypoint is shown, if any (0 = none)
 	
 			Db.loadPlayer(player);							// load player-dependent data
-			setGpsText(player);								// set initially displayed text
+			player.addGuiElement(info);
+			player.setAttribute(key_gpsLabel, info);
 		}
 	}
 
@@ -473,7 +486,7 @@ public class Gps extends Plugin implements Listener
 
 	 	@param	player	the affected player
 	*/
-	protected void listWp(Player player)
+	public void listWp(Player player)
 	{
 		Waypoint[]	waypoints = (Waypoint[]) player.getAttribute(key_gpsWpList);
 		player.sendTextMessage(Msgs.msg[Msgs.msg_wpList]);
@@ -491,7 +504,7 @@ public class Gps extends Plugin implements Listener
 
 		@param	player	the target player
 	*/
-	protected void help(Player player)
+	public void help(Player player)
 	{
 		for (int i = Msgs.txt_help_from; i <= Msgs.txt_help_to; i++)
 			player.sendTextMessage(Msgs.msg[i]);

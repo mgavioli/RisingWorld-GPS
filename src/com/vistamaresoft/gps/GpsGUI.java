@@ -325,8 +325,8 @@ public class GpsGUI extends GuiPanel
 			// WP buttons
 			isShown	= ((int)player.getAttribute(Gps.key_gpsWpShow) != 0);
 			// enable/disable WP SET depending on the current wp being Home or not
-			buttWpShow.setColor(currWp != 0 ? BUTTON_COLOUR : BUTTON_INACTIVE);
-			buttWpShow.setClickable(currWp != 0 ? true : false);
+			buttWpSet.setColor(currWp != 0 ? BUTTON_COLOUR : BUTTON_INACTIVE);
+			buttWpSet.setClickable(currWp != 0 ? true : false);
 			// enable/disable WP SHOW depending on curr. wp being defined or not
 			buttWpShow.setColor(wp != null ? BUTTON_COLOUR : BUTTON_INACTIVE);
 			buttWpShow.setClickable(wp != null ? true : false);
