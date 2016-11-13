@@ -62,7 +62,7 @@ public class Db
 	static void loadPlayer(Player player)
 	{
 		ResultSet	result;
-		Waypoint	waypoints[]	= new Waypoint[Gps.maxWp+1];
+		Waypoint	waypoints[]	= new Waypoint[Gps.MAX_WP+1];
 		player.setAttribute(Gps.key_gpsWpList, waypoints);
 		try {
 			result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_name` = '" + player.getName() + "' ORDER BY `wp_id`;");

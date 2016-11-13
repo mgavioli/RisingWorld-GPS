@@ -1,6 +1,6 @@
 name: GPS
 main: com.vistamaresoft.gps.Gps
-version: 0.3.2
+version: 1.0.0
 author: Maurizio M. Gavioli aka Miwarre
 team: VistaMare Software
 description: "To aid the player in world navigation and positioning.

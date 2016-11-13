@@ -66,7 +66,7 @@ public class Waypoint
 		if (dist < 4)			// if distance less than 2 m, data are unreliable, only output wp name
 			return  " | ---°  " + shortName + "   <2m";
 		double	radial;
-		radial				= Math.acos(deltaN / dist) * Gps.rad2deg;
+		radial				= Math.acos(deltaN / dist) * Gps.RAD2DEG;
 		if (deltaW > 0)
 			radial 			= 360 - radial;		// for this adjustment,  see setGpsText() in Gps.java
 		int 	rdl			= (int)/*Math.floor*/(radial + 0.5);

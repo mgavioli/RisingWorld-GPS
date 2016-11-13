@@ -24,6 +24,7 @@ import net.risingworld.api.events.player.PlayerCommandEvent;
 import net.risingworld.api.events.player.PlayerConnectEvent;
 import net.risingworld.api.events.player.PlayerSpawnEvent;
 import net.risingworld.api.events.player.gui.PlayerGuiElementClickEvent;
+import net.risingworld.api.events.player.gui.PlayerGuiInputEvent;
 import net.risingworld.api.gui.Font;
 import net.risingworld.api.gui.GuiLabel;
 import net.risingworld.api.gui.PivotPosition;
@@ -33,36 +34,39 @@ import net.risingworld.api.utils.Vector3f;
 public class Gps extends Plugin implements Listener
 {
 	// SETTINGS with their default values
-	static final public boolean	allowTpToWpDef		= false;
-	static final public float	gpsXPosDef			= 0.5f;
-	static final public float	gpsYPosDef			= 0.1f;
-	static final public String	localeLanguageDef	= "en";
-	static final public int		wpNameDispLenDef	= 8;
-	static final public int		wpHdgPrecisDef		= 5;
+	public static final boolean	allowTpToWpDef		= false;
+	public static final float	gpsXPosDef			= 0.5f;
+	public static final float	gpsYPosDef			= 0.1f;
+	public static final float	gpsHintYPos			= -0.25f;
+	public static final String	localeLanguageDef	= "en";
+	public static final int		wpNameDispLenDef	= 8;
+	public static final int		wpHdgPrecisDef		= 5;
 
-	static public		String	commandPrefix		= "/gps";
-	static public		boolean	allowTpToWp			= allowTpToWpDef;	// whether teleporting to waypoints (in addition to home) is possible or not
-	static public		float	gpsYPos				= gpsYPosDef;
-	static public		Locale	locale;
-	static public		int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
-	static public		int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
+	public static		String	commandPrefix		= "/gps";
+	public static		boolean	allowTpToWp			= allowTpToWpDef;	// whether teleporting to waypoints (in addition to home) is possible or not
+	public static		float	gpsYPos				= gpsYPosDef;
+	public static		Locale	locale;
+	public static		int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
+	public static		int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
 
 	// KEYS FOR PLAYER ATTRIBUTES
-	static final public String	key_gpsShow			= "com.vms.gpsShow";
-	static final public String	key_gpsGUI			= "com.vms.gpsGUI";
-	static final public String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
-	static final public String	key_gpsLabel		= "com.vms.gpsLabel";
-	static final public String	key_gpsWpList		= "com.vms.gpsWpList";
-	static final public String	key_gpsWpShow		= "com.vms.gpsWpShow";
+	public static final String	key_gpsShow			= "com.vms.gpsShow";
+	public static final String	key_gpsGUI			= "com.vms.gpsGUI";
+	public static final String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
+	public static final String	key_gpsLabel		= "com.vms.gpsLabel";
+	public static final String	key_gpsHint			= "com.vms.gpsHint";
+	public static final String	key_gpsWpList		= "com.vms.gpsWpList";
+	public static final String	key_gpsWpShow		= "com.vms.gpsWpShow";
 
 	// CONSTANTS
-	static final public	double	rad2deg		= 180.0 / Math.PI;
-	static final public String	version		= "0.3.2";
-	static final public int		homeWp		= 0;			// the index of the home waypoint
-	static final public int		maxWp		= 15;			// the max waypoint index
-	static final public int		minWp		= 0;			// the min waypoint index (including home)
-	static final public int		minWpProper	= 1;			// the min waypoint index (EXCLUDING home)
-	static final public int		fontSize	= 18;			// the size of the info window font
+	public static final double	RAD2DEG			= 180.0 / Math.PI;
+	public static final String	VERSION			= "1.0.0";
+	public static final int		HOME_WP			= 0;			// the index of the home waypoint
+	public static final int		MAX_WP			= 15;			// the max waypoint index
+	public static final int		MIN_WP			= 0;			// the min waypoint index (including home)
+	public static final int		MIN_WP_PROPER	= 1;			// the min waypoint index (EXCLUDING home)
+	public static final int		FONT_SIZE		= 18;			// the size of the info window font
+	public static final int		HINT_SIZE		= 13;			// the size of the info window font
 
 	//------------------
 	// E V E N T S
@@ -155,7 +159,7 @@ public class Gps extends Plugin implements Listener
 					Db.setHome(player);
 					return;
 				case "home":
-					teleportToWp(player, homeWp);
+					teleportToWp(player, HOME_WP);
 					return;
 				}
 				break;
@@ -188,7 +192,7 @@ public class Gps extends Plugin implements Listener
 			Db.setHome(player);
 
 		if (cmd[0].equals("/home") )
-			teleportToWp(player, homeWp);
+			teleportToWp(player, HOME_WP);
 
 	}
 
@@ -215,6 +219,15 @@ public class Gps extends Plugin implements Listener
 			gui.click(event.getGuiElement(), player);
 	}
 
+	@EventMethod
+	public void onTextEntry(PlayerGuiInputEvent event)
+	{
+		Player	player	= event.getPlayer();
+		GpsGUI	gui		= (GpsGUI)player.getAttribute(key_gpsGUI);
+		if (gui != null)
+			gui.textEntry(event.getGuiElement(), player, event.getInput());
+	}
+
 	//------------------
 	// STATIC METHODS EXTERNALLY ACCESSIBLE
 	//------------------
@@ -228,6 +241,9 @@ public class Gps extends Plugin implements Listener
 	static public void setGPSShow(Player player, boolean show)
 	{
 		player.setAttribute(key_gpsShow, show);
+		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsLabel);
+		if (labelgpsInfo != null)
+			labelgpsInfo.setVisible(show);
 		setGpsText(player);							// update displayed text
 	}
 
@@ -252,7 +268,7 @@ public class Gps extends Plugin implements Listener
 	static protected void setShowWp(Player player, Integer index)
 	{
 		// check index is there and is legal
-		if (index == null || index < minWp || index > maxWp)
+		if (index == null || index < MIN_WP || index > MAX_WP)
 		{
 			player.sendTextMessage(Msgs.msg[Msgs.err_showWpInvalidIndex]);
 			return;
@@ -306,7 +322,7 @@ public class Gps extends Plugin implements Listener
 		// if no idx, look for a suitable index
 		if (idx == null || idx == 0)
 		{
-			for (int i = minWpProper; i <= maxWp; i++)
+			for (int i = MIN_WP_PROPER; i <= MAX_WP; i++)
 			{
 				Waypoint	wp	= ((Waypoint[])player.getAttribute(key_gpsWpList))[i];
 				if (wp == null || wp.name == null || wp.name == "")
@@ -316,9 +332,9 @@ public class Gps extends Plugin implements Listener
 				}
 			}
 		}
-		if (idx == null || idx == 0)	idx = minWpProper;	// if still no index, use first index
+		if (idx == null || idx == 0)	idx = MIN_WP_PROPER;	// if still no index, use first index
 		// if idx out of range => error
-		if (idx < 0 || idx > maxWp)
+		if (idx < 0 || idx > MAX_WP)
 		{
 			player.sendTextMessage(Msgs.msg[Msgs.err_showWpInvalidIndex]);
 			return;
@@ -341,7 +357,7 @@ public class Gps extends Plugin implements Listener
 	static protected void teleportToWp(Player player, Integer index)
 	{
 		// check index is there and is legal
-		if (index == null || index < minWp || index > maxWp)
+		if (index == null || index < MIN_WP || index > MAX_WP)
 		{
 			player.sendTextMessage(Msgs.msg[Msgs.err_showWpInvalidIndex]);
 			return;
@@ -394,7 +410,7 @@ public class Gps extends Plugin implements Listener
 				heading				= 0.0;
 			else
 			// get the heading angle and convert to degrees
-				heading				= Math.acos(rotZ / scale) * rad2deg;
+				heading				= Math.acos(rotZ / scale) * RAD2DEG;
 			// hdg is correct from N (0°) through E (90°) to S (180°)
 			// then, when view is toward W, it decreases down to 0° again;
 			// when view is toward W, correct by taking the complementary angle
@@ -425,7 +441,7 @@ public class Gps extends Plugin implements Listener
 			String		text		= "";
 			Waypoint[]	wps			= (Waypoint[])player.getAttribute(key_gpsWpList);
 			Waypoint	home;
-			if ((boolean)player.getAttribute(key_gpsHomeShow) && wps != null && (home=wps[homeWp]) != null)
+			if ((boolean)player.getAttribute(key_gpsHomeShow) && wps != null && (home=wps[HOME_WP]) != null)
 				text = home.toString(heading, playerPos) + " | ";
 			// main data
 			text	+= String.format("%03d°", hdg) + " (" + posN + latDir + posE + longDir + posH;
@@ -457,8 +473,12 @@ public class Gps extends Plugin implements Listener
 			info.setColor(0x0000007f);
 			info.setFont(Font.DefaultMono);
 			info.setFontColor(0xFFFFFFFF);
-			info.setFontSize(fontSize);
+			info.setFontSize(FONT_SIZE);
 			info.setPivot(PivotPosition.Center);
+			GuiLabel	hint	= new GuiLabel(Msgs.msg[Msgs.txt_gpsHelpHint], gpsXPosDef, gpsHintYPos, true);
+			hint.setPivot(PivotPosition.Center);
+			hint.setFontSize(HINT_SIZE);
+			info.addChild(hint);
 	
 			// player attributes keeping track of status (whether the GPS data are shown or not
 			// and what they should contain)
@@ -468,6 +488,7 @@ public class Gps extends Plugin implements Listener
 	
 			Db.loadPlayer(player);							// load player-dependent data
 			player.addGuiElement(info);
+			player.addGuiElement(hint);
 			player.setAttribute(key_gpsLabel, info);
 		}
 	}
@@ -475,7 +496,7 @@ public class Gps extends Plugin implements Listener
 	private GpsGUI createGpsGUI(Player player)
 	{
 		// the GPS GUI panel
-		GpsGUI	gui		= new GpsGUI(player, gpsYPos);
+		GpsGUI	gui		= new GpsGUI(this, player, gpsYPos);
 		player.addGuiElement(gui);
 		player.setAttribute(key_gpsGUI, gui);
 		return gui;
@@ -490,7 +511,7 @@ public class Gps extends Plugin implements Listener
 	{
 		Waypoint[]	waypoints = (Waypoint[]) player.getAttribute(key_gpsWpList);
 		player.sendTextMessage(Msgs.msg[Msgs.msg_wpList]);
-		for (int i=minWp; i<= maxWp; i++)
+		for (int i=MIN_WP; i<= MAX_WP; i++)
 		{
 			Waypoint	wp	= waypoints[i];
 			String		txt;

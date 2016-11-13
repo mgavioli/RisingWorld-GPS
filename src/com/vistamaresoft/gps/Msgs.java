@@ -57,8 +57,10 @@ public class Msgs
 	public static final int txt_help_from	= 25;
 	public static final int	txt_help_to		= 37;
 	public static final int	txt_undefined	= 38;
+	public static final int	txt_gpsHelpHint	= 39;
+	public static final int	txt_wpNameCapt	= 40;
 
-	private static final int	LAST_TEXT	= txt_undefined;
+	private static final int	LAST_TEXT	= txt_wpNameCapt;
 
 	public static			String[]	msg			=
 	{
@@ -66,11 +68,11 @@ public class Msgs
 		"GPS goto: teleport to waypoints is disabled.",
 		"GPS setwp: duplicate index",
 		"GPS setwp: duplicate name",
-		"GPS setwp: waypoint index must be an integer between "+Gps.minWpProper+" and "+Gps.maxWp,
-		"GPS goto/wp: waypoint index must be an integer between "+Gps.minWp+" and "+Gps.maxWp,
+		"GPS setwp: waypoint index must be an integer between "+Gps.MIN_WP_PROPER+" and "+Gps.MAX_WP,
+		"GPS goto/wp: waypoint index must be an integer between "+Gps.MIN_WP+" and "+Gps.MAX_WP,
 		"GPS goto/wp: waypoint %d is undefined",
-		"GPS "+Gps.version+" unloaded successfully!",
-		"GPS "+Gps.version+" loaded successfully!",
+		"GPS "+Gps.VERSION+" unloaded successfully!",
+		"GPS "+Gps.VERSION+" loaded successfully!",
 		"GPS: Home point set.",
 		"GPS defined waypoints:",
 		"GPS: Waypoint %1$d '%2$s' set.",
@@ -100,7 +102,9 @@ public class Msgs
 		"[#00ff40]/gps goto <n> [#ffffff]teleports to n-th wp (if defined)",
 		"[#00ff40]/home [#ffffff]same of '/gps home' (for compatibility)",
 		"[#00ff40]/sethome [#ffffff]same as '/gps sethome' (for compatiblity)",
-		"--[Undefined]--"
+		"--[Undefined]--",
+		"Chat '/gps' for control panel",
+		"Enter the name for the new waypoint and press ENTER"
 	};
 
 	private static final	String		BUNDLE_NAME	= "/locale/messages";
@@ -131,10 +135,10 @@ public class Msgs
 		for (int i = 0; i <= LAST_TEXT; i++)
 			msg[i]	= settings.getProperty(String.format("%03d", i) );
 		// a few strings require additional steps
-		msg[err_setWpInvalidIndex]	= String.format(msg[err_setWpInvalidIndex], Gps.minWpProper, Gps.maxWp);
-		msg[err_showWpInvalidIndex]	= String.format(msg[err_showWpInvalidIndex], Gps.minWp, Gps.maxWp);
-		msg[msg_deinit]				= String.format(msg[msg_deinit], Gps.version);
-		msg[msg_init]				= String.format(msg[msg_init], Gps.version);
+		msg[err_setWpInvalidIndex]	= String.format(msg[err_setWpInvalidIndex], Gps.MIN_WP_PROPER, Gps.MAX_WP);
+		msg[err_showWpInvalidIndex]	= String.format(msg[err_showWpInvalidIndex], Gps.MIN_WP, Gps.MAX_WP);
+		msg[msg_deinit]				= String.format(msg[msg_deinit], Gps.VERSION);
+		msg[msg_init]				= String.format(msg[msg_init], Gps.VERSION);
 		return true;
 	}
 }
