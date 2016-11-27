@@ -34,17 +34,16 @@ import net.risingworld.api.utils.Vector3f;
 public class Gps extends Plugin implements Listener
 {
 	// SETTINGS with their default values
-	public static final boolean	allowTpToWpDef		= false;
 	public static final float	gpsXPosDef			= 0.5f;
-	public static final float	gpsYPosDef			= 0.1f;
 	public static final float	gpsHintYPos			= -0.25f;
 	public static final String	localeLanguageDef	= "en";
 	public static final int		wpNameDispLenDef	= 8;
 	public static final int		wpHdgPrecisDef		= 5;
 
 	public static		String	commandPrefix		= "/gps";
-	public static		boolean	allowTpToWp			= allowTpToWpDef;	// whether teleporting to waypoints (in addition to home) is possible or not
-	public static		float	gpsYPos				= gpsYPosDef;
+	public static		boolean	allowTpToWp			= false;	// whether teleporting to waypoints (in addition to home) is possible or not
+	public static		boolean	coordNativeFormat	= false;
+	public static		float	gpsYPos				= 0.1f;
 	public static		Locale	locale;
 	public static		int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
 	public static		int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
@@ -60,7 +59,8 @@ public class Gps extends Plugin implements Listener
 
 	// CONSTANTS
 	public static final double	RAD2DEG			= 180.0 / Math.PI;
-	public static final String	VERSION			= "1.0.0";
+	public static final String	VERSION			= "1.1.0";
+	public static final	String	publicName		= "GPS";
 	public static final int		HOME_WP			= 0;			// the index of the home waypoint
 	public static final int		MAX_WP			= 15;			// the max waypoint index
 	public static final int		MIN_WP			= 0;			// the min waypoint index (including home)
@@ -129,13 +129,7 @@ public class Gps extends Plugin implements Listener
 			{
 			case 1:
 				// if no sub-command, show the GPS GUI panel
-				GpsGUI	gui;
-				if (!player.hasAttribute(key_gpsGUI))
-					gui	= createGpsGUI(player);
-				else
-					gui	= (GpsGUI)player.getAttribute(key_gpsGUI);
-				if (gui != null)
-					gui.show(player);
+				mainGui(player);
 				return;
 			case 2:
 				switch (cmd[1])
@@ -226,6 +220,31 @@ public class Gps extends Plugin implements Listener
 		GpsGUI	gui		= (GpsGUI)player.getAttribute(key_gpsGUI);
 		if (gui != null)
 			gui.textEntry(event.getGuiElement(), player, event.getInput());
+	}
+
+	//------------------
+	// PUBLIC METHODS
+	//------------------
+
+	public String getPublicName()
+	{
+		return publicName;
+	}
+
+	/**
+		Displays the GPS control panel for the given player.
+
+		@param	player	the player
+	*/
+	public void mainGui(Player player)
+	{
+		GpsGUI	gui;
+		if (!player.hasAttribute(key_gpsGUI))
+			gui	= createGpsGUI(player);
+		else
+			gui	= (GpsGUI)player.getAttribute(key_gpsGUI);
+		if (gui != null)
+			gui.show(player);
 	}
 
 	//------------------
@@ -420,22 +439,28 @@ public class Gps extends Plugin implements Listener
 			if (hdg == 0)			hdg = 360;
 
 			// PLAYER POSITION
-			Vector3f	playerPos = player.getPosition();
-			int			posE		= (int) Math.floor(-playerPos.x);	// convert positive W to standard, positive E
-			int			posN		= (int) Math.floor(playerPos.z);
-			int			posH		= (int) Math.floor(playerPos.y);
-			// set N/S and E/W according to signs of coordinates
-			String		latDir		= "N,";
-			if (posN < 0)
+			Vector3f	playerPos	= player.getPosition();
+			int			posW		= (int)playerPos.x;
+			int			posE		= -posW;
+			int			posN		= (int)playerPos.z;
+			int			posH		= (int)playerPos.y;
+			String		latDir		= "";
+			String		longDir		= "";
+			if (!coordNativeFormat)
 			{
-				posN	= -posN;
-				latDir	= "S,";
-			}
-			String		longDir		= "E) h";
-			if (posE < 0)
-			{
-				posE	= -posE;
-				longDir	= "W) h";
+				// set N/S and E/W according to signs of coordinates
+				latDir		= Msgs.msg[Msgs.txt_north];
+				if (posN < 0)
+				{
+					posN	= -posN;
+					latDir	= Msgs.msg[Msgs.txt_south];
+				}
+				longDir	= Msgs.msg[Msgs.txt_east];
+				if (posE < 0)
+				{
+					posE	= -posE;
+					longDir	= Msgs.msg[Msgs.txt_west];
+				}
 			}
 			// OUTPUT: home
 			String		text		= "";
@@ -444,7 +469,9 @@ public class Gps extends Plugin implements Listener
 			if ((boolean)player.getAttribute(key_gpsHomeShow) && wps != null && (home=wps[HOME_WP]) != null)
 				text = home.toString(heading, playerPos) + " | ";
 			// main data
-			text	+= String.format("%03d°", hdg) + " (" + posN + latDir + posE + longDir + posH;
+			text	+= String.format("%03d°", hdg) + (!coordNativeFormat ?
+					(" (" + posN + latDir + "," + posE + longDir +") h" + posH) :
+					(" (" + posW + "," + posH + "," + posN + ")"));
 			// waypoint
 			int			wpToShow	= (int) player.getAttribute(key_gpsWpShow);
 			if (wpToShow > 0)
@@ -532,29 +559,9 @@ public class Gps extends Plugin implements Listener
 	}
 
 	/**
-		Returns txt as an integer number if it can be interpreted as one
-		or 0 if it cannot.
-
-	 	@param	txt	the String to interpret as an int
-	 	@return	the equivalent Integer or null if txt cannot represent an integer.
-	 */
-	static public Integer toInteger(String txt)
-	{
-		if (txt == null)
-			return 0;
-		Integer val;
-		try {
-			val = Integer.parseInt(txt);
-		} catch (NumberFormatException e) {		// txt cannot be parsed as a number
-			return 0;
-		}
-		return val;
-	}
-
-	/**
 		Initialises settings from settings file.
 	*/
-	protected void initSettings()
+	private void initSettings()
 	{
 		// create and load settings from disk
 		Properties settings	= new Properties();
@@ -565,11 +572,17 @@ public class Gps extends Plugin implements Listener
 			settings.load(in);
 			in.close();
 			// fill global values
+			Integer	temp;
 			commandPrefix	= "/" + settings.getProperty("command", commandPrefix);
-			allowTpToWp		= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0")) != 0;
+			temp			= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0"));
+			allowTpToWp		= temp != null && temp != 0;
+			temp			= Integer.parseInt(settings.getProperty("coordNativeFormat", coordNativeFormat ? "1" : "0"));
+			coordNativeFormat= temp != null && temp != 0;
 			gpsYPos			= Float.parseFloat(settings.getProperty("gpsYPos", Float.toString(gpsYPos)));
-			wpDispLen		= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
-			wpHdgPrecis		= toInteger(settings.getProperty("wpHdgPrecis", Integer.toString(wpHdgPrecis)));
+			temp			= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
+			wpDispLen		= temp != null ? temp : wpNameDispLenDef;
+			temp			= toInteger(settings.getProperty("wpHdgPrecis", Integer.toString(wpHdgPrecis)));
+			wpHdgPrecis		= temp != null ? temp : wpHdgPrecisDef;
 			// locale is a bit more complex
 			String		strLocale		= settings.getProperty("locale", localeLanguageDef);
 			String[]	localeParams	= strLocale.split("-");
@@ -593,4 +606,25 @@ public class Gps extends Plugin implements Listener
 			return;					// settings are init'ed anyway: on exception, do nothing
 		}
 	}
+
+	/**
+		Returns txt as an integer number if it can be interpreted as one
+		or 0 if it cannot.
+
+	 	@param	txt	the String to interpret as an int
+	 	@return	the equivalent int or null if txt cannot represent an integer.
+	 */
+	static protected Integer toInteger(String txt)
+	{
+		if (txt == null)
+			return null;
+		int val;
+		try {
+			val = Integer.decode(txt);
+		} catch (NumberFormatException e) {		// txt cannot be parsed as a number
+			return null;
+		}
+		return val;
+	}
+
 }

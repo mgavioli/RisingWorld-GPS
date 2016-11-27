@@ -59,8 +59,12 @@ public class Msgs
 	public static final int	txt_undefined	= 38;
 	public static final int	txt_gpsHelpHint	= 39;
 	public static final int	txt_wpNameCapt	= 40;
+	public static final int	txt_north		= 41;
+	public static final int	txt_east		= 42;
+	public static final int	txt_south		= 43;
+	public static final int	txt_west		= 44;
 
-	private static final int	LAST_TEXT	= txt_wpNameCapt;
+	private static final int	LAST_TEXT	= txt_west;
 
 	public static			String[]	msg			=
 	{
@@ -104,7 +108,11 @@ public class Msgs
 		"[#00ff40]/sethome [#ffffff]same as '/gps sethome' (for compatiblity)",
 		"--[Undefined]--",
 		"Chat '/gps' for control panel",
-		"Enter the name for the new waypoint and press ENTER"
+		"Enter the name for the new waypoint and press ENTER",
+		"N",
+		"E",
+		"S",
+		"W"
 	};
 
 	private static final	String		BUNDLE_NAME	= "/locale/messages";
@@ -139,6 +147,9 @@ public class Msgs
 		msg[err_showWpInvalidIndex]	= String.format(msg[err_showWpInvalidIndex], Gps.MIN_WP, Gps.MAX_WP);
 		msg[msg_deinit]				= String.format(msg[msg_deinit], Gps.VERSION);
 		msg[msg_init]				= String.format(msg[msg_init], Gps.VERSION);
+		for (int i=txt_help_from+1; i <= txt_help_to; i++)
+			msg[i]					= String.format(msg[i],	Gps.commandPrefix);
+		msg[txt_gpsHelpHint]		= String.format(msg[txt_gpsHelpHint], Gps.commandPrefix);
 		return true;
 	}
 }
