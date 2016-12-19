@@ -574,9 +574,9 @@ public class Gps extends Plugin implements Listener
 			// fill global values
 			Integer	temp;
 			commandPrefix	= "/" + settings.getProperty("command", commandPrefix);
-			temp			= Integer.parseInt(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0"));
+			temp			= toInteger(settings.getProperty("allowTpToWp", allowTpToWp ? "1" : "0"));
 			allowTpToWp		= temp != null && temp != 0;
-			temp			= Integer.parseInt(settings.getProperty("coordNativeFormat", coordNativeFormat ? "1" : "0"));
+			temp			= toInteger(settings.getProperty("coordNativeFormat", coordNativeFormat ? "1" : "0"));
 			coordNativeFormat= temp != null && temp != 0;
 			gpsYPos			= Float.parseFloat(settings.getProperty("gpsYPos", Float.toString(gpsYPos)));
 			temp			= toInteger(settings.getProperty("wpDispLength", Integer.toString(wpDispLen)));
