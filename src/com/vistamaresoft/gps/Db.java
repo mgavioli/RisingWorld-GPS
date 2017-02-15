@@ -12,9 +12,10 @@
 
 package com.vistamaresoft.gps;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
 import net.risingworld.api.Plugin;
 import net.risingworld.api.database.Database;
 import net.risingworld.api.objects.Player;
@@ -24,6 +25,10 @@ public class Db
 {
 	// Globals
 	static	protected	Database	db	= null;
+
+	public static final	int			ERROR_OK			= 0;
+	public static final	int			ERROR_DB			= -1;
+	public static final	int			ERROR_INVALIDARG	= -2;
 
 	/**
 		Initialises and opens the DB for this plug-in. Can be run at each
@@ -61,14 +66,16 @@ public class Db
 	*/
 	static void loadPlayer(Player player)
 	{
-		ResultSet	result;
 		Waypoint	waypoints[]	= new Waypoint[Gps.MAX_WP+1];
 		player.setAttribute(Gps.key_gpsWpList, waypoints);
-		try {
-			result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_name` = '" + player.getName() + "' ORDER BY `wp_id`;");
-			try {
+		try (ResultSet result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_name` = '"
+				+ player.getName() + "' ORDER BY `wp_id`;"))
+		{
 				while (result.next())
 				{
+					int	wpIdx	= result.getInt("wp_id");
+					if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
+						continue;
 					waypoints[result.getInt("wp_id")] =
 							new Waypoint(
 									result.getInt("wp_id"),
@@ -78,12 +85,32 @@ public class Db
 									result.getFloat("wp_z")
 									);
 				}
-			} catch (SQLException e) {
-				e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static Waypoint[] getGlobalWps()
+	{
+		ArrayList<Waypoint>	waypoints	= new ArrayList<Waypoint>();
+		try (ResultSet result = db.executeQuery(
+				"SELECT * FROM `waypoints` WHERE `player_name` = '    ';"))
+		{
+			while (result.next())
+			{
+				waypoints.add(new Waypoint(
+								result.getInt("wp_id"),
+								result.getString("wp_name"),
+								result.getFloat("wp_x"),
+								result.getFloat("wp_y"),
+								result.getFloat("wp_z")
+								)
+				);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		return waypoints.toArray(new Waypoint[waypoints.size()]);
 	}
 
 	/**
@@ -97,21 +124,70 @@ public class Db
 	*/
 	static void setWp(Player player, int wpIndex, String wpName)
 	{
+		setWp(player, wpIndex, player.getPosition(), wpName);
+	}
+
+	static void setWp(Player player, int wpIdx, Vector3f pos, String wpName)
+	{
+		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
+			return;
 		String		playerName	= player.getName();
-		Vector3f	playerPos	= player.getPosition();
 		// update DB
 		db.executeUpdate(
 				"INSERT OR REPLACE INTO waypoints (player_name,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('"
-				+playerName+"','"+wpName+"',"+wpIndex+","+playerPos.x+","+playerPos.y+","+playerPos.z+");"
+				+playerName+"','"+wpName+"',"+wpIdx+","+pos.x+","+pos.y+","+pos.z+");"
 				);
 		// update player cache
-		Waypoint	wp			= new Waypoint(wpIndex, wpName, playerPos.getX(), playerPos.getY(), playerPos.getZ());
-		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIndex]	= wp;
+		Waypoint	wp			= new Waypoint(wpIdx, wpName, pos.x, pos.y, pos.z);
+		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIdx]	= wp;
 
-		if (wpIndex == 0)
+		if (wpIdx == 0)
 			player.sendTextMessage(Msgs.msg[Msgs.msg_homeSet]);
 		else
-			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpSet], wpIndex, wpName));
+			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpSet], wpIdx, wpName));
+	}
+
+	static int deleteWp(Player player, int wpIdx)
+	{
+		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
+			return ERROR_INVALIDARG;
+		String		playerName	= player.getName();
+		// update DB
+		db.executeUpdate(
+				"DELETE FROM waypoints WHERE player_name = '"+playerName+"' AND wp_id="+wpIdx+";"
+				);
+		// update player cache
+		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIdx]	= null;
+
+		if (wpIdx == 0)
+			player.sendTextMessage(Msgs.msg[Msgs.msg_homeDel]);
+		else
+			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpDel], wpIdx));
+		return ERROR_OK;
+	}
+
+	static int shareWp(Player player, int wpIdx)
+	{
+		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
+			return ERROR_INVALIDARG;
+		Waypoint	wp			= ((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIdx];
+		if (wp == null)
+			return ERROR_INVALIDARG;
+		String		wpName	= wp.name + " (" + player.getName() + ")";
+		// prepare name parameter to avoid quoting issues
+		String query	= "INSERT OR REPLACE INTO `waypoints` (player_name,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('    ',?,0,"
+				+wp.pos.x+","+wp.pos.y+","+wp.pos.z+");";
+		try(PreparedStatement stmt	= db.getConnection().prepareStatement(query)
+		)
+		{
+			stmt.setString(1, wpName);
+			stmt.executeUpdate();
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+			return ERROR_DB;
+		}
+		return ERROR_OK;
 	}
 
 	/**

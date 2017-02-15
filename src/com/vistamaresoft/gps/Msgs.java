@@ -23,91 +23,42 @@ import java.util.Properties;
 public class Msgs
 {
 	// TEXT IDENTIFIERS
-	public static final int	err_invalidCmd			= 0;
-	public static final int	err_noTpToWp			= 1;
-	public static final int	err_setWpDuplIdx		= 2;
-	public static final int	err_setWpDuplName		= 3;
-	public static final int	err_setWpInvalidIndex	= 4;
-	public static final int	err_showWpInvalidIndex	= 5;
-	public static final int	err_showWpUndefinedWp	= 6;
+	public static final int	err_noTpToWp			= 0;
+	public static final int	err_showWpInvalidIndex	= 1;
+	public static final int	err_showWpUndefinedWp	= 2;
 
 	// Info messages
-	public static final int	msg_deinit		= 7;
-	public static final int	msg_init		= 8;
-	public static final int	msg_homeSet		= 9;
-	public static final int	msg_wpList		= 10;
-	public static final int	msg_wpSet		= 11;
-
-	// GUI texts
-	public static final int	button_close	= 12;
-	public static final int	button_goto		= 13;
-	public static final int	button_off		= 14;
-	public static final int	button_on		= 15;
-	public static final int	button_homehide	= 16;
-	public static final int	button_homeset	= 17;
-	public static final int	button_homeshow	= 18;
-	public static final int	button_next		= 19;
-	public static final int	button_prev		= 20;
-	public static final int	button_wphide	= 21;
-	public static final int	button_wpset	= 22;
-	public static final int	button_wpshow	= 23;
+	public static final int	msg_homeSet		= 3;
+	public static final int	msg_wpSet		= 4;
+	public static final int	msg_homeDel		= 5;
+	public static final int	msg_wpDel		= 6;
 
 	// Various texts
-	public static final int	txt_homeName	= 24;
-	public static final int txt_help_from	= 25;
-	public static final int	txt_help_to		= 37;
-	public static final int	txt_undefined	= 38;
-	public static final int	txt_gpsHelpHint	= 39;
-	public static final int	txt_wpNameCapt	= 40;
-	public static final int	txt_north		= 41;
-	public static final int	txt_east		= 42;
-	public static final int	txt_south		= 43;
-	public static final int	txt_west		= 44;
+	public static final int	txt_homeName	=  7;
+	public static final int	txt_undefined	=  8;
+	public static final int	txt_gpsHelpHint	=  9;
+	public static final int	txt_wpNameTitle	= 10;
+	public static final int	txt_wpNameCapt	= 11;
+	public static final int	txt_north		= 12;
+	public static final int	txt_east		= 13;
+	public static final int	txt_south		= 14;
+	public static final int	txt_west		= 15;
 
 	private static final int	LAST_TEXT	= txt_west;
 
 	public static			String[]	msg			=
 	{
-		"Invalid GPS command: '",
 		"GPS goto: teleport to waypoints is disabled.",
-		"GPS setwp: duplicate index",
-		"GPS setwp: duplicate name",
-		"GPS setwp: waypoint index must be an integer between "+Gps.MIN_WP_PROPER+" and "+Gps.MAX_WP,
 		"GPS goto/wp: waypoint index must be an integer between "+Gps.MIN_WP+" and "+Gps.MAX_WP,
 		"GPS goto/wp: waypoint %d is undefined",
-		"GPS "+Gps.VERSION+" unloaded successfully!",
-		"GPS "+Gps.VERSION+" loaded successfully!",
 		"GPS: Home point set.",
-		"GPS defined waypoints:",
 		"GPS: Waypoint %1$d '%2$s' set.",
-		"CLOSE",
-		"GO\nTO",
-		"TURN OFF",
-		"TURN ON",
-		"HIDE\nHOME",
-		"SET\nHOME",
-		"SHOW\nHOME",
-		" > ", 
-		" < ", 
-		"HIDE\nWP",
-		"SET\nWP",
-		"SHOW\nWP",
+		"GPS: Home point deleted.",
+		"GPS: Waypoint %d deleted.",
 		"Home",
-		"[#00ff40]GPS Help",
-		"[#00ff40]/gps [#ffffff]opens the GPS GUI",
-		"[#00ff40]/gps on [#ffffff]turns whole GPS display on",
-		"[#00ff40]/gps off [#ffffff]turns whole GPS display off",
-		"[#00ff40]/gps sethome [#ffffff]set home position to current position",
-		"[#00ff40]/gps showhome [#ffffff]toggles home data display on/off",
-		"[#00ff40]/gps setwp [n] [name] [#ffffff]sets n-th wpt with name 'name'",
-		"[#00ff40]/gps showwp <n> [#ffffff]turns wpt display on (n=0 to turn off)",
-		"[#00ff40]/gps list [#ffffff]lists defined waypoints (incl. home)",
-		"[#00ff40]/gps home [#ffffff]teleports to home (if defined)",
-		"[#00ff40]/gps goto <n> [#ffffff]teleports to n-th wp (if defined)",
-		"[#00ff40]/home [#ffffff]same of '/gps home' (for compatibility)",
-		"[#00ff40]/sethome [#ffffff]same as '/gps sethome' (for compatiblity)",
 		"--[Undefined]--",
 		"Chat '/gps' for control panel",
+		"Waypoint name",
 		"Enter the name for the new waypoint and press ENTER",
 		"N",
 		"E",
@@ -143,12 +94,9 @@ public class Msgs
 		for (int i = 0; i <= LAST_TEXT; i++)
 			msg[i]	= settings.getProperty(String.format("%03d", i) );
 		// a few strings require additional steps
-		msg[err_setWpInvalidIndex]	= String.format(msg[err_setWpInvalidIndex], Gps.MIN_WP_PROPER, Gps.MAX_WP);
 		msg[err_showWpInvalidIndex]	= String.format(msg[err_showWpInvalidIndex], Gps.MIN_WP, Gps.MAX_WP);
-		msg[msg_deinit]				= String.format(msg[msg_deinit], Gps.VERSION);
-		msg[msg_init]				= String.format(msg[msg_init], Gps.VERSION);
-		for (int i=txt_help_from+1; i <= txt_help_to; i++)
-			msg[i]					= String.format(msg[i],	Gps.commandPrefix);
+//		for (int i=txt_help_from+1; i <= txt_help_to; i++)
+//			msg[i]					= String.format(msg[i],	Gps.commandPrefix);
 		msg[txt_gpsHelpHint]		= String.format(msg[txt_gpsHelpHint], Gps.commandPrefix);
 		return true;
 	}
