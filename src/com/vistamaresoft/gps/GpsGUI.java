@@ -12,7 +12,6 @@
 
 package com.vistamaresoft.gps;
 
-import java.io.IOException;
 import com.vistamaresoft.rwgui.GuiDialogueBox;
 import com.vistamaresoft.rwgui.GuiInputDlgBox;
 import com.vistamaresoft.rwgui.GuiLayout;
@@ -58,6 +57,10 @@ public class GpsGUI extends GuiDialogueBox
 
 	private static final	float	PANEL_XPOS		= 0.5f;
 	private static final	int		BUTTON_SIZE		= 32;
+
+	private static final	int		STATE_NONE		= 0;
+	private static final	int		STATE_WPLIST	= 1;
+	//
 	// FIELDS
 	//
 	private GuiImage		buttGoto;		// the "go to way point" button
@@ -76,6 +79,7 @@ public class GpsGUI extends GuiDialogueBox
 	RWGuiCallback			dlgHandler;
 	Waypoint[]				globalWps;
 	int						globalWpIdx;
+	int						state;
 
 	private		static	ImageInformation[]	icons		= new ImageInformation[NUM_OF_IMGINFO];
 	private		static	String[]			iconPaths =
@@ -90,6 +94,7 @@ public class GpsGUI extends GuiDialogueBox
 		super(plugin, "G P S", RWGui.LAYOUT_VERT, null);
 		dlgHandler	= new DlgHandler();
 		setCallback(dlgHandler);
+		state	= STATE_NONE;
 		setPosition(PANEL_XPOS, infoYPos + (infoYPos < 0.5f ? 0.1f : - 0.25f), true);
 		this.currWp	= currWp;
 		// the wp description
@@ -108,15 +113,9 @@ public class GpsGUI extends GuiDialogueBox
 		layout.setPadding(RWGui.DEFAULT_PADDING * 2);
 		// load button icons, if not loaded yet
 		String pluginPath	= plugin.getPath();
-		try
-		{
-			if (icons[0] == null)
-				for (int i = BUTTONOFF_ICN; i <= BUTTWPIMPORT_ICN; i++)
-					icons[i]	= new ImageInformation(pluginPath + iconPaths[i]);
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		if (icons[0] == null)
+			for (int i = BUTTONOFF_ICN; i <= BUTTWPIMPORT_ICN; i++)
+				icons[i]	= new ImageInformation(pluginPath + iconPaths[i]);
 		GuiImage	image	= new GuiImage(icons[BUTTONOFF_ICN], 0, 0, false, BUTTON_SIZE, BUTTON_SIZE, false);
 		layout.addChild(image, BUTTONOFF_ID);
 		buttGoto		= new GuiImage(icons[BUTTGOTO_ICN], 0, 0, false, BUTTON_SIZE, BUTTON_SIZE, false);
@@ -157,8 +156,43 @@ public class GpsGUI extends GuiDialogueBox
 			switch (id)
 			{
 			case RWGui.ABORT_ID:
-				player.setAttribute(Gps.key_gpsGUIcurrWp, currWp);
+				switch (state)
+				{
+				case STATE_NONE:
+					player.setAttribute(Gps.key_gpsGUIcurrWp, currWp);
+					break;
+				case STATE_WPLIST:
+					state	= STATE_NONE;
+					break;
+				}
 				return;
+			case RWGui.OK_ID:
+				if (state == STATE_WPLIST)
+				{
+					state	= STATE_NONE;
+					int	checkedWps	= (int)data;
+					for (int i = Gps.MIN_WP; i < Gps.MAX_WP; i++)
+					{
+						int	checkFlag	= 1 << i;
+						if ( (checkedWps & checkFlag) != 0)
+						{
+							int retVal	= Db.shareWp(player, i);
+							switch (retVal)
+							{
+							case Db.ERROR_OK:
+								player.sendTextMessage(String.format(Msgs.msg[Msgs.txt_wp_shared], i));
+								break;
+							case Db.ERROR_EXISTING:
+								player.sendTextMessage(String.format(Msgs.msg[Msgs.txt_wp_existed], i));
+								break;
+							default:
+								player.sendTextMessage(String.format(Msgs.msg[Msgs.txt_error], retVal));
+								break;
+							}
+						}
+					}
+				}
+				break;
 			case BUTTONOFF_ID:
 				Gps.setGPSShow(player, !(boolean)player.getAttribute(Gps.key_gpsShow));
 				return;
@@ -200,7 +234,8 @@ public class GpsGUI extends GuiDialogueBox
 				Gps.setShowWp(player, 0);
 				break;
 			case BUTTWPSHARE_ID:
-				Db.shareWp(player, currWp);
+				state	= STATE_WPLIST;
+				push (player, new GuiWpSelector(Gps.plugin, player, dlgHandler));
 				return;
 			case BUTTWPIMPORT_ID:
 				listGlobalWps(player);
@@ -283,13 +318,13 @@ public class GpsGUI extends GuiDialogueBox
 			// Home/WP DELETE button
 			buttWpDel.setVisible(wp != null);
 			// WP buttons
-			isShown	= ((int)player.getAttribute(Gps.key_gpsWpShow) != 0 /*&& !isTextEntry*/);
+			isShown	= ((int)player.getAttribute(Gps.key_gpsWpShow) != 0);
 			// enable/disable WP SET/IMPORT depending on the current wp being Home or not
 			buttWpSet.setVisible(currWp > 0);
 			buttWpImport.setVisible(currWp > 0);
 			// enable/disable WP SHOW/SHARE depending on curr. wp being defined or not
 			buttWpShow.setVisible(currWp > 0 && wp != null);
-			buttWpShare.setVisible(wp != null);
+//			buttWpShare.setVisible(wp != null);
 			// enable/disable WP HIDE depending on some wp being shown or not
 			buttWpHide.setVisible(isShown);
 		}

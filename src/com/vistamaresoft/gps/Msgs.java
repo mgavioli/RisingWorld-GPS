@@ -43,6 +43,12 @@ public class Msgs
 	public static final int	txt_east		= 13;
 	public static final int	txt_south		= 14;
 	public static final int	txt_west		= 15;
+	public static final int	txt_wp_selector	= 16;
+	public static final	int	txt_no_wp		= 17;
+	public static final int	txt_share		= 18;
+	public static final int	txt_wp_shared	= 19;
+	public static final int	txt_wp_existed	= 20;
+	public static final int	txt_error		= 21;
 
 	private static final int	LAST_TEXT	= txt_west;
 
@@ -63,7 +69,13 @@ public class Msgs
 		"N",
 		"E",
 		"S",
-		"W"
+		"W",
+		"Waypoints to share",
+		"[No waypoint defined]",
+		"\n SHARE \n ",
+		"GPS: Waypoint %d has been shared.",
+		"GPS: Waypoint %d was already shared.",
+		"GPS: Internal error (%d)."
 	};
 
 	private static final	String		BUNDLE_NAME	= "/locale/messages";
@@ -98,6 +110,7 @@ public class Msgs
 //		for (int i=txt_help_from+1; i <= txt_help_to; i++)
 //			msg[i]					= String.format(msg[i],	Gps.commandPrefix);
 		msg[txt_gpsHelpHint]		= String.format(msg[txt_gpsHelpHint], Gps.commandPrefix);
+		msg[txt_share]				= "\n " + msg[txt_share] + " \n ";
 		return true;
 	}
 }

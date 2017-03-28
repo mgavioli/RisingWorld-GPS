@@ -29,6 +29,7 @@ public class Db
 	public static final	int			ERROR_OK			= 0;
 	public static final	int			ERROR_DB			= -1;
 	public static final	int			ERROR_INVALIDARG	= -2;
+	public static final	int			ERROR_EXISTING		= -3;
 
 	/**
 		Initialises and opens the DB for this plug-in. Can be run at each
@@ -173,10 +174,22 @@ public class Db
 		Waypoint	wp			= ((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIdx];
 		if (wp == null)
 			return ERROR_INVALIDARG;
-		String		wpName	= wp.name + " (" + player.getName() + ")";
+		// look for a WP already existing at or near those coordinates
+		String	query	= "SELECT wp_id FROM `waypoints` WHERE player_name = \"    \" AND abs(wp_x - "
+				+wp.pos.x+") <= 5 AND abs(wp_y -"+wp.pos.y+ ") <= 5 AND abs(wp_z - "+wp.pos.z+") < 5";
+		try (ResultSet result = db.executeQuery(query))
+		{
+			if (result.next())
+				return ERROR_EXISTING;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return ERROR_DB;
+		}
+
+		String	wpName	= wp.name + " (" + player.getName() + ")";
 		// prepare name parameter to avoid quoting issues
-		String query	= "INSERT OR REPLACE INTO `waypoints` (player_name,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('    ',?,0,"
-				+wp.pos.x+","+wp.pos.y+","+wp.pos.z+");";
+		query			= "INSERT OR REPLACE INTO `waypoints` (player_name,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('    ',?,"
+				+(player.getDbID()*100 + wpIdx)+","+wp.pos.x+","+wp.pos.y+","+wp.pos.z+");";
 		try(PreparedStatement stmt	= db.getConnection().prepareStatement(query)
 		)
 		{

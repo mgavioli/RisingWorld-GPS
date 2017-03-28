@@ -57,7 +57,7 @@ public class Gps extends Plugin implements Listener
 
 	// CONSTANTS
 	public static final double	RAD2DEG			= 180.0 / Math.PI;
-	public static final String	VERSION			= "1.2.0";
+	public static final String	VERSION			= "1.3.1";
 	public static final	String	publicName		= "GPS";
 	public static final int		HOME_WP			= 0;			// the index of the home waypoint
 	public static final int		MAX_WP			= 15;			// the max waypoint index
@@ -66,6 +66,7 @@ public class Gps extends Plugin implements Listener
 	public static final int		FONT_SIZE		= 18;			// the size of the info window font
 	public static final int		HINT_SIZE		= 13;			// the size of the info window font
 
+	public static		Gps		plugin;
 	//------------------
 	// E V E N T S
 	//------------------
@@ -74,6 +75,7 @@ public class Gps extends Plugin implements Listener
 	@Override
 	public void onEnable()
 	{
+		plugin	= this;
 		initSettings();
 		Msgs.init(getPath(), locale);
 		Db.init(this);							// init DB, if required
