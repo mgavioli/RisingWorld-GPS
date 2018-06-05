@@ -12,10 +12,14 @@
 
 package com.vistamaresoft.gps;
 
-import java.sql.PreparedStatement;
+import com.vistamaresoft.rwgui.RWGui;
+import java.io.File;
+//import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+//import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.risingworld.api.Plugin;
 import net.risingworld.api.database.Database;
 import net.risingworld.api.objects.Player;
@@ -27,7 +31,7 @@ public class Db
 	static	protected	Database	db	= null;
 
 	public static final	int			ERROR_OK			= 0;
-	public static final	int			ERROR_DB			= -1;
+	public static final	int			ERROR_DB				= -1;
 	public static final	int			ERROR_INVALIDARG	= -2;
 	public static final	int			ERROR_EXISTING		= -3;
 
@@ -40,18 +44,51 @@ public class Db
 	static void init(Plugin plugin)
 	{
 		if (db == null)
-			db = plugin.getSQLiteConnection(plugin.getPath() + "/gps-"+plugin.getWorld().getName()+".db");
+			db = plugin.getSQLiteConnection(plugin.getPath() + "/gps2-"+plugin.getWorld().getName()+".db");
 
+		// create DB table, if not exixs
 		db.execute(
 			"CREATE TABLE IF NOT EXISTS `waypoints` ("
-			+ "`player_name` CHAR(64) NOT NULL DEFAULT ('[NoName]'),"
+			+ "`player_id`   INTEGER  NOT NULL DEFAULT ( 0 ),"
 			+ "`wp_name`     CHAR(64) NOT NULL DEFAULT ('[NoName]'),"
 			+ "`wp_id`       INTEGER  NOT NULL,"
 			+ "`wp_x`        INTEGER  NOT NULL DEFAULT ( 0 ),"
 			+ "`wp_y`        INTEGER  NOT NULL DEFAULT ( 0 ),"
 			+ "`wp_z`        INTEGER  NOT NULL DEFAULT ( 0 ),"
-			+ "PRIMARY KEY (player_name, wp_id) "
+			+ "UNIQUE (player_id, wp_id) ON CONFLICT REPLACE"
 			+ ");");
+
+		// look for an old structure DB and convert it if found
+		String	oldDbFName	= plugin.getPath() + "/gps2-"+plugin.getWorld().getName()+".db";
+		File	oldDbFile	= new File(oldDbFName);
+		if (oldDbFile.exists())
+		{
+			try (Database oldDb	= plugin.getSQLiteConnection(oldDbFName))
+			{
+				try (ResultSet result	= oldDb.executeQuery("SELECT * FROM waypoints"))
+				{
+					while (result.next())
+					{
+						int		playerId	= RWGui.getPlayerDbIdFromName(plugin, result.getString(1));
+						if (playerId != 0)
+						{
+							// update DB
+							db.executeUpdate(
+								"INSERT OR REPLACE INTO waypoints (player_id,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('"
+									+playerId+"','"+result.getString(2)+"',"+result.getInt(3)+","
+									+result.getInt(4)+","+result.getInt(5)+","+result.getInt(6)+");"
+							);
+						}
+					}
+				}
+				catch (SQLException ex)
+				{
+					Logger.getLogger(Db.class.getName()).log(Level.SEVERE, null, ex);
+				}
+			}
+			// remove the old formar DB
+			oldDbFile.delete();
+		}
 	}
 	static void deinit()
 	{
@@ -69,8 +106,8 @@ public class Db
 	{
 		Waypoint	waypoints[]	= new Waypoint[Gps.MAX_WP+1];
 		player.setAttribute(Gps.key_gpsWpList, waypoints);
-		try (ResultSet result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_name` = '"
-				+ player.getName() + "' ORDER BY `wp_id`;"))
+		try (ResultSet result = db.executeQuery("SELECT * FROM `waypoints` WHERE `player_id` = '"
+				+ player.getDbID() + "' ORDER BY `wp_id`;"))
 		{
 				while (result.next())
 				{
@@ -86,16 +123,17 @@ public class Db
 									result.getFloat("wp_z")
 									);
 				}
-		} catch (SQLException e) {
-			e.printStackTrace();
+		} catch (SQLException e)
+		{
+			Logger.getLogger(Db.class.getName()).log(Level.SEVERE, null, e);
 		}
 	}
-
+/*
 	static Waypoint[] getGlobalWps()
 	{
-		ArrayList<Waypoint>	waypoints	= new ArrayList<Waypoint>();
+		ArrayList<Waypoint>	waypoints	= new ArrayList<>();
 		try (ResultSet result = db.executeQuery(
-				"SELECT * FROM `waypoints` WHERE `player_name` = '    ';"))
+				"SELECT * FROM `waypoints` WHERE `player_id` = 0;"))
 		{
 			while (result.next())
 			{
@@ -113,7 +151,7 @@ public class Db
 		}
 		return waypoints.toArray(new Waypoint[waypoints.size()]);
 	}
-
+*/
 	/**
 		Inserts into the DB (or replace if already present) data for a
 		way-point at current player position, also updating the player
@@ -130,13 +168,13 @@ public class Db
 
 	static void setWp(Player player, int wpIdx, Vector3f pos, String wpName)
 	{
-		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
+		if (wpIdx < Gps.MIN_WP || wpIdx > Gps.MAX_WP)
 			return;
-		String		playerName	= player.getName();
+		int		playerId	= player.getDbID();
 		// update DB
 		db.executeUpdate(
-				"INSERT OR REPLACE INTO waypoints (player_name,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('"
-				+playerName+"','"+wpName+"',"+wpIdx+","+pos.x+","+pos.y+","+pos.z+");"
+				"INSERT OR REPLACE INTO waypoints (player_id,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('"
+				+playerId+"','"+wpName+"',"+wpIdx+","+pos.x+","+pos.y+","+pos.z+");"
 				);
 		// update player cache
 		Waypoint	wp			= new Waypoint(wpIdx, wpName, pos.x, pos.y, pos.z);
@@ -152,10 +190,10 @@ public class Db
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
 			return ERROR_INVALIDARG;
-		String		playerName	= player.getName();
+		int		playerId	= player.getDbID();
 		// update DB
 		db.executeUpdate(
-				"DELETE FROM waypoints WHERE player_name = '"+playerName+"' AND wp_id="+wpIdx+";"
+				"DELETE FROM waypoints WHERE player_id = '"+playerId+"' AND wp_id="+wpIdx+";"
 				);
 		// update player cache
 		((Waypoint[])player.getAttribute(Gps.key_gpsWpList))[wpIdx]	= null;
@@ -166,7 +204,7 @@ public class Db
 			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpDel], wpIdx));
 		return ERROR_OK;
 	}
-
+/*
 	static int shareWp(Player player, int wpIdx)
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
@@ -202,7 +240,7 @@ public class Db
 		}
 		return ERROR_OK;
 	}
-
+*/
 	/**
 		Inserts into the DB (or replace if already present) Home data
 		at current player position, also updating the player attribute cache.

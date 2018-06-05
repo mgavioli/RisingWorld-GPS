@@ -48,16 +48,16 @@ public class Gps extends Plugin implements Listener
 
 	// KEYS FOR PLAYER ATTRIBUTES
 	public static final String	key_gpsShow			= "com.vms.gpsShow";
-	public static final String	key_gpsGUIcurrWp	= "com.vms.gpsGUIcurrWp";
+	public static final String	key_gpsGUIcurrWp		= "com.vms.gpsGUIcurrWp";
 	public static final String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
-	public static final String	key_gpsLabel		= "com.vms.gpsLabel";
+	public static final String	key_gpsLabel			= "com.vms.gpsLabel";
 	public static final String	key_gpsHint			= "com.vms.gpsHint";
 	public static final String	key_gpsWpList		= "com.vms.gpsWpList";
 	public static final String	key_gpsWpShow		= "com.vms.gpsWpShow";
 
 	// CONSTANTS
 	public static final double	RAD2DEG			= 180.0 / Math.PI;
-	public static final String	VERSION			= "1.3.1";
+	public static final String	VERSION			= "1.4.0";
 	public static final	String	publicName		= "GPS";
 	public static final int		HOME_WP			= 0;			// the index of the home waypoint
 	public static final int		MAX_WP			= 15;			// the max waypoint index
@@ -100,6 +100,7 @@ public class Gps extends Plugin implements Listener
 	@EventMethod
 	public void onPlayerConnect(PlayerConnectEvent event)
 	{
+		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" CONNECTED!");
 		initPlayer(event.getPlayer());
 	}
 
@@ -110,6 +111,7 @@ public class Gps extends Plugin implements Listener
 	@EventMethod
 	public void onPlayerSpawn(PlayerSpawnEvent event)
 	{
+		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" SPAWNED!");
 		setGpsText(event.getPlayer());
 	}
 

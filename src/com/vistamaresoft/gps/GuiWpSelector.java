@@ -27,9 +27,9 @@ public class GuiWpSelector extends GuiDialogueBox
 	//
 	// FIELDS
 	//
-	private	GuiImage[]		checkBoxes;
-	private	int				checkedFlags;
-	private	RWGuiCallback	myCallback;
+	private final	GuiImage[]		checkBoxes;
+	private			int				checkedFlags;
+	private final	RWGuiCallback	myCallback;
 
 	public GuiWpSelector(Gps plugin, Player player, RWGuiCallback callback)
 	{
@@ -39,7 +39,7 @@ public class GuiWpSelector extends GuiDialogueBox
 		boolean				added	= false;
 		checkBoxes					= new GuiImage[Gps.MAX_WP - Gps.MIN_WP + 1];
 		checkedFlags				= 0;
-		GuiHorizontalLayout	layout;
+		GuiHorizontalLayout	locLayout;
 		Waypoint[]			waypoints = (Waypoint[]) player.getAttribute(Gps.key_gpsWpList);
 		Waypoint			wp;
 		if (waypoints != null)
@@ -47,21 +47,21 @@ public class GuiWpSelector extends GuiDialogueBox
 			{
 				if ( (wp=waypoints[i]) != null)
 				{
-					layout	= (GuiHorizontalLayout)addNewLayoutChild(RWGui.LAYOUT_HORIZ,
+					locLayout	= (GuiHorizontalLayout)addNewLayoutChild(RWGui.LAYOUT_HORIZ,
 							RWGui.LAYOUT_H_LEFT | RWGui.LAYOUT_V_MIDDLE);
 					checkBoxes[i]	= new GuiImage(0, 0, false, RWGui.BUTTON_SIZE, RWGui.BUTTON_SIZE, false);
 					RWGui.setImage(checkBoxes[i], RWGui.ICN_UNCHECK);
-					layout.addChild(checkBoxes[i], i);
-					layout.addChild(new GuiLabel(""+i+". "+wp.name, 0, 0, false), i);
+					locLayout.addChild(checkBoxes[i], i);
+					locLayout.addChild(new GuiLabel(""+i+". "+wp.name, 0, 0, false), i);
 					added	= true;
 				}
 			}
 		if (added)
 		{
-			layout	= (GuiHorizontalLayout)addNewLayoutChild(RWGui.LAYOUT_HORIZ,
+			locLayout	= (GuiHorizontalLayout)addNewLayoutChild(RWGui.LAYOUT_HORIZ,
 					RWGui.LAYOUT_H_CENTRE | RWGui.LAYOUT_V_MIDDLE);
 			GuiLabel	label	= new GuiLabel(Msgs.msg[Msgs.txt_share], 0, 0, false);
-			layout.addChild(label, DOBUTTON_ID);
+			locLayout.addChild(label, DOBUTTON_ID);
 			label.setColor(RWGui.ACTIVE_COLOUR);
 		}
 		else

@@ -8,8 +8,10 @@ folder, obtaining a folder structure like:
 ── <RisingWorld>
     ├── plugins
     │    ├── gps
-    │    │    ├── locale
+    │    │    ├── assets/
+    │    │    ├── locale/
     │    │    ├── gps.jar
+    │    │    ├── readme.txt
     │    │    └── settings.properties
 
 

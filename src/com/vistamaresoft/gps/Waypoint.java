@@ -33,6 +33,7 @@ public class Waypoint
 	// toString()
 	//
 	// Returns a textual representation of the waypoint suitable for a list
+	@Override
 	public String toString()
 	{
 		if (name == null || name.length() < 1)		// undefined
