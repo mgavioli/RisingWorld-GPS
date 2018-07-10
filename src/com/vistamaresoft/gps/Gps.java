@@ -1,5 +1,5 @@
 /****************************
-	G P S  -  A Java plug-in for Rising World.
+	G P S  -  A Java plug-in for Rising World for self-locating and world navigation.
 
 	Gps.java - The main plug-in class
 
@@ -14,6 +14,8 @@ package com.vistamaresoft.gps;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 import net.risingworld.api.Plugin;
@@ -52,17 +54,21 @@ public class Gps extends Plugin implements Listener
 	public static final String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
 	public static final String	key_gpsLabel			= "com.vms.gpsLabel";
 	public static final String	key_gpsHint			= "com.vms.gpsHint";
+	public static final String	key_gpsTargetList	= "com.vms.gpsTargetList";
 	public static final String	key_gpsWpList		= "com.vms.gpsWpList";
 	public static final String	key_gpsWpShow		= "com.vms.gpsWpShow";
 
 	// CONSTANTS
 	public static final double	RAD2DEG			= 180.0 / Math.PI;
 	public static final String	VERSION			= "1.4.0";
+	public static final int		VERSION_INT		= 10400;
 	public static final	String	publicName		= "GPS";
 	public static final int		HOME_WP			= 0;			// the index of the home waypoint
 	public static final int		MAX_WP			= 15;			// the max waypoint index
 	public static final int		MIN_WP			= 0;			// the min waypoint index (including home)
 	public static final int		MIN_WP_PROPER	= 1;			// the min waypoint index (EXCLUDING home)
+	public static final int		TARGET_ID		= -1;			// the wp ID common to all targets
+	public static final float	TARGET_MIN_DIST	= 9;			// the distance (in blocks) below which a target has been reached
 	public static final int		FONT_SIZE		= 18;			// the size of the info window font
 	public static final int		HINT_SIZE		= 13;			// the size of the info window font
 
@@ -100,7 +106,7 @@ public class Gps extends Plugin implements Listener
 	@EventMethod
 	public void onPlayerConnect(PlayerConnectEvent event)
 	{
-		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" CONNECTED!");
+//		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" CONNECTED!");
 		initPlayer(event.getPlayer());
 	}
 
@@ -111,7 +117,7 @@ public class Gps extends Plugin implements Listener
 	@EventMethod
 	public void onPlayerSpawn(PlayerSpawnEvent event)
 	{
-		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" SPAWNED!");
+//		System.out.println("GPS: PLAYER "+event.getPlayer().getName()+" SPAWNED!");
 		setGpsText(event.getPlayer());
 	}
 
@@ -143,6 +149,7 @@ public class Gps extends Plugin implements Listener
 	/**	Called when the player changes of world position.
 		Note: change of view direction without any actual displacement
 		does not always trigger this event, particularly while flying.
+	 * @param event	the change-position event
 	*/
 	@EventMethod
 	public void onPlayerChangePosition(PlayerChangePositionEvent event)
@@ -151,16 +158,20 @@ public class Gps extends Plugin implements Listener
 	}
 
 	//------------------
-	// PUBLIC METHODS
+	// PluginCentral PUBLIC METHODS
 	//------------------
 
+	/**
+	 * Returns the human-readable, public name of this plug-in (conforms to the PluginCentral interface)
+	 * @return	th name of this plug-in
+	 */
 	public String getPublicName()
 	{
 		return publicName;
 	}
 
 	/**
-		Displays the GPS control panel for the given player.
+		Displays the GPS control panel for the given player (conforms to the PluginCentral interface).
 
 		@param	player	the player
 	*/
@@ -170,12 +181,22 @@ public class Gps extends Plugin implements Listener
 		if (player.hasAttribute(key_gpsGUIcurrWp))
 			currWp	= (int)player.getAttribute(key_gpsGUIcurrWp);
 		GpsGUI	gui		= new GpsGUI(this, player, gpsYPos, currWp);
-		if (gui != null)
-			gui.show(player);
+		gui.show(player);
+	}
+
+	/**
+	 * Returns the version for this plug-in (conforms to the PluginCentral 2 interface).
+	 * @return the plug-in version as an int.
+	 */
+	public int version()
+	{
+		return VERSION_INT;
 	}
 
 	//------------------
-	// STATIC METHODS EXTERNALLY ACCESSIBLE
+	// PUBLIC METHODS
+	//
+	// (These methods are available to other plug-ins too)
 	//------------------
 
 	/**
@@ -184,7 +205,7 @@ public class Gps extends Plugin implements Listener
 		@param	player	the player for whom to toggle the GSP display
 	 	@param	show	true to show | false to hide
 	*/
-	static public void setGPSShow(Player player, boolean show)
+	public void setGPSShow(Player player, boolean show)
 	{
 		player.setAttribute(key_gpsShow, show);
 		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsLabel);
@@ -198,7 +219,7 @@ public class Gps extends Plugin implements Listener
 
 		@param	player	the player for which to change the home display
 	*/
-	static protected void setShowHome(Player player)
+	public void setShowHome(Player player)
 	{
 		player.setAttribute(key_gpsHomeShow, !(boolean)player.getAttribute(key_gpsHomeShow) );
 		setGpsText(player);				// update displayed text
@@ -208,19 +229,21 @@ public class Gps extends Plugin implements Listener
 		Controls the display of way-point data.
 
 		@param	player	the affected player.
-	 	@param	index	an integer from 1 to 9 to display the corresponding
-	 					way-point or 0 to turn way-point display off
+	 	@param	index	an integer from 1 to 9 to display the corresponding way-point
+		*				or -1 to display next target point
+						or 0 to turn way-point display off
 	*/
-	static protected void setShowWp(Player player, Integer index)
+	public void setShowWp(Player player, Integer index)
 	{
 		// check index is there and is legal
-		if (index == null || index < MIN_WP || index > MAX_WP)
+		if (index == null || index < TARGET_ID || index > MAX_WP)
 		{
 			player.sendTextMessage(Msgs.msg[Msgs.err_showWpInvalidIndex]);
 			return;
 		}
 		// if not turning off (index = 0), check that waypoint exists
-		if (index > 0 && ((Waypoint[])player.getAttribute(key_gpsWpList))[index] == null)
+		if (index == TARGET_ID && player.getAttribute(key_gpsTargetList) == null ||
+			index > 0 && ((Waypoint[])player.getAttribute(key_gpsWpList))[index] == null)
 		{
 			player.sendTextMessage(String.format(Msgs.msg[Msgs.err_showWpUndefinedWp], index));
 			return;
@@ -230,14 +253,35 @@ public class Gps extends Plugin implements Listener
 	}
 
 	/**
-		Teleports to the index -th waypoint.
+	 * Adds the given point to the list of targets for player 'player'
+	 * @param	player	the player to whom add the target
+	 * @param	x		the target x coordinate
+	 * @param	y		the target y coordinate
+	 * @param	z		the target z coordinate
+	 * @param	name	a human readable name for the target
+	 */
+	public void addTarget(Player player, String name, float x, float y, float z)
+	{
+		List<Waypoint> targets	= (List<Waypoint>)player.getAttribute(key_gpsTargetList);
+		if (targets == null)
+		{
+			targets	= new ArrayList<>();
+			player.setAttribute(key_gpsTargetList, targets);
+		}
+		Waypoint	wp	= new Waypoint(TARGET_ID, name, x, y, z);
+		targets.add(wp);
+		setShowWp(player, TARGET_ID);
+	}
+
+	/**
+		Teleports to the index-th way-point.
 		The way-point must be defined and, if different from Home, teleport to
 		way-points must be enabled.
 
 	 	@param	player	the affected player.
 	 	@param	index	a int from 0 to 9 with the index of the way-point.
 	*/
-	static protected void teleportToWp(Player player, Integer index)
+	void teleportToWp(Player player, Integer index)
 	{
 		// check index is there and is legal
 		if (index == null || index < MIN_WP || index > MAX_WP)
@@ -267,7 +311,7 @@ public class Gps extends Plugin implements Listener
 
  		@param	player	the affected player
 	*/
-	static protected void setGpsText(Player player)
+	void setGpsText(Player player)
 	{
 		if (player == null)
 			return;
@@ -276,6 +320,28 @@ public class Gps extends Plugin implements Listener
 		GuiLabel labelgpsInfo = (GuiLabel) player.getAttribute(key_gpsLabel);
 		if (labelgpsInfo == null)
 			return;
+
+		// check for targets
+		Vector3f		playerPos	= player.getPosition();
+		List<Waypoint>	targets		= (List<Waypoint>)player.getAttribute(key_gpsTargetList);
+		if (targets != null && !targets.isEmpty())
+		{
+			Waypoint	wp			= targets.get(0);
+			float		dist		= (playerPos.x - wp.pos.x)*(playerPos.x - wp.pos.x)+
+										(playerPos.z - wp.pos.z)*(playerPos.z - wp.pos.z);
+			// has the first target in the list been reached?
+			if (dist < TARGET_MIN_DIST)
+			{
+				// yes, remove it from the list
+				targets.remove(0);
+				// if list is empty, remove it as an attribute and turn wp display off
+				if (targets.isEmpty())
+				{
+					player.setAttribute(key_gpsTargetList, null);
+					player.setAttribute(key_gpsWpShow, 0);
+				}
+			}
+		}
 
 		if ((boolean) player.getAttribute(key_gpsShow) )
 		{
@@ -303,7 +369,6 @@ public class Gps extends Plugin implements Listener
 			if (hdg == 0)			hdg = 360;
 
 			// PLAYER POSITION
-			Vector3f	playerPos	= player.getPosition();
 			int			posW		= (int)playerPos.x;
 			int			posE		= -posW;
 			int			posN		= (int)playerPos.z;
@@ -338,12 +403,18 @@ public class Gps extends Plugin implements Listener
 					(" (" + posW + "," + posH + "," + posN + ")"));
 			// waypoint
 			int			wpToShow	= (int) player.getAttribute(key_gpsWpShow);
-			if (wpToShow > 0)
+			Waypoint	wp			= null;
+			if (wpToShow == TARGET_ID)
 			{
-				Waypoint	wp		= ((Waypoint[])player.getAttribute(key_gpsWpList))[wpToShow];
-				if (wp != null)
-					text += " | " + wp.toString(heading, playerPos);
+				if (targets != null && !targets.isEmpty())
+					wp	= targets.get(0);
 			}
+			else if (wpToShow > 0)
+			{
+				wp		= ((Waypoint[])player.getAttribute(key_gpsWpList))[wpToShow];
+			}
+			if (wp != null)
+				text += " | " + wp.toString(heading, playerPos);
 
 			labelgpsInfo.setText(text);
 		}
@@ -424,7 +495,7 @@ public class Gps extends Plugin implements Listener
 		} catch (IOException e) {
 			e.printStackTrace();
 			locale	= new Locale(localeLanguageDef);
-			return;					// settings are init'ed anyway: on exception, do nothing
+//			return;					// settings are init'ed anyway: on exception, do nothing
 		}
 	}
 
@@ -435,7 +506,7 @@ public class Gps extends Plugin implements Listener
  		@param	defValue	the value to return on error.
  		@return	the equivalent int or defValue if txt cannot represent an integer.
 	 */
-	static protected int toInteger(String txt, int defValue)
+	static int toInteger(String txt, int defValue)
 	{
 		if (txt == null)
 			return defValue;

@@ -43,12 +43,12 @@ public class Msgs
 	public static final int	txt_east		= 13;
 	public static final int	txt_south		= 14;
 	public static final int	txt_west		= 15;
-	public static final int	txt_wp_selector	= 16;
-	public static final	int	txt_no_wp		= 17;
-	public static final int	txt_share		= 18;
-	public static final int	txt_wp_shared	= 19;
-	public static final int	txt_wp_existed	= 20;
-	public static final int	txt_error		= 21;
+//	public static final int	txt_wp_selector	= 16;
+//	public static final	int	txt_no_wp		= 16;
+//	public static final int	txt_share		= 18;
+//	public static final int	txt_wp_shared	= 19;
+//	public static final int	txt_wp_existed	= 20;
+//	public static final int	txt_error		= 17;
 
 	private static final int	LAST_TEXT	= txt_west;
 
@@ -63,19 +63,19 @@ public class Msgs
 		"GPS: Waypoint %d deleted.",
 		"Home",
 		"--[Undefined]--",
-		"Chat '/gps' for control panel",
+		"Chat '/$s' for control panel",
 		"Waypoint name",
 		"Enter the name for the new waypoint and press ENTER",
 		"N",
 		"E",
 		"S",
 		"W",
-		"Waypoints to share",
-		"[No waypoint defined]",
-		"\n SHARE \n ",
-		"GPS: Waypoint %d has been shared.",
-		"GPS: Waypoint %d was already shared.",
-		"GPS: Internal error (%d)."
+//		"Waypoints to share",
+//		"[No waypoint defined]",
+//		"\n SHARE \n ",
+//		"GPS: Waypoint %d has been shared.",
+//		"GPS: Waypoint %d was already shared.",
+//		"GPS: Internal error (%d)."
 	};
 
 	private static final	String		BUNDLE_NAME	= "/locale/messages";
@@ -107,10 +107,8 @@ public class Msgs
 			msg[i]	= settings.getProperty(String.format("%03d", i) );
 		// a few strings require additional steps
 		msg[err_showWpInvalidIndex]	= String.format(msg[err_showWpInvalidIndex], Gps.MIN_WP, Gps.MAX_WP);
-//		for (int i=txt_help_from+1; i <= txt_help_to; i++)
-//			msg[i]					= String.format(msg[i],	Gps.commandPrefix);
 		msg[txt_gpsHelpHint]		= String.format(msg[txt_gpsHelpHint], Gps.commandPrefix);
-		msg[txt_share]				= "\n " + msg[txt_share] + " \n ";
+//		msg[txt_share]				= "\n " + msg[txt_share] + " \n ";
 		return true;
 	}
 }

@@ -1,4 +1,4 @@
-name: GPS
+name: com.vms.GPS
 main: com.vistamaresoft.gps.Gps
 version: 1.4.0
 author: Maurizio M. Gavioli aka Miwarre

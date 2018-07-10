@@ -14,10 +14,8 @@ package com.vistamaresoft.gps;
 
 import com.vistamaresoft.rwgui.RWGui;
 import java.io.File;
-//import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-//import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.risingworld.api.Plugin;
@@ -31,8 +29,8 @@ public class Db
 	static	protected	Database	db	= null;
 
 	public static final	int			ERROR_OK			= 0;
-	public static final	int			ERROR_DB				= -1;
-	public static final	int			ERROR_INVALIDARG	= -2;
+	public static final	int			ERROR_DB			= -1;
+	public static final	int			ERROR_INVALIDARG		= -2;
 	public static final	int			ERROR_EXISTING		= -3;
 
 	/**
@@ -59,7 +57,8 @@ public class Db
 			+ ");");
 
 		// look for an old structure DB and convert it if found
-		String	oldDbFName	= plugin.getPath() + "/gps2-"+plugin.getWorld().getName()+".db";
+		// (the old DB identifiedplayers by name rather than by (U)ID).
+		String	oldDbFName	= plugin.getPath() + "/gps-"+plugin.getWorld().getName()+".db";
 		File	oldDbFile	= new File(oldDbFName);
 		if (oldDbFile.exists())
 		{
@@ -67,12 +66,17 @@ public class Db
 			{
 				try (ResultSet result	= oldDb.executeQuery("SELECT * FROM waypoints"))
 				{
+					// for each of the old DB table row
 					while (result.next())
 					{
+						// convert player name into player DB ID
 						int		playerId	= RWGui.getPlayerDbIdFromName(plugin, result.getString(1));
+						// if the player name has been found and correctly converted
+						// (this also discards global shared way-points which were
+						// stored with an impossible player name).
 						if (playerId != 0)
 						{
-							// update DB
+							// store WP data (with player ID) into new DB
 							db.executeUpdate(
 								"INSERT OR REPLACE INTO waypoints (player_id,wp_name,wp_id,wp_x,wp_y,wp_z) VALUES ('"
 									+playerId+"','"+result.getString(2)+"',"+result.getInt(3)+","
@@ -86,10 +90,14 @@ public class Db
 					Logger.getLogger(Db.class.getName()).log(Level.SEVERE, null, ex);
 				}
 			}
-			// remove the old formar DB
+			// remove the old DB
 			oldDbFile.delete();
 		}
 	}
+
+	/**
+	 * Releases DB resources
+	 */
 	static void deinit()
 	{
 		db.close();
@@ -128,7 +136,9 @@ public class Db
 			Logger.getLogger(Db.class.getName()).log(Level.SEVERE, null, e);
 		}
 	}
-/*
+
+/*	GLOBAL WAYPOINT HAVE BEEN REMOVED
+
 	static Waypoint[] getGlobalWps()
 	{
 		ArrayList<Waypoint>	waypoints	= new ArrayList<>();
@@ -158,7 +168,7 @@ public class Db
 		attribute cache.
 
 		@param	player	the affected player
-		@param	wpIndex	the index (0 - 9) of the new waypoint
+		@param	wpIndex	the index (0 - 9) of the new way-point
 		@param	wpName	the name of the new way-point.
 	*/
 	static void setWp(Player player, int wpIndex, String wpName)
@@ -166,6 +176,15 @@ public class Db
 		setWp(player, wpIndex, player.getPosition(), wpName);
 	}
 
+	/**
+		Inserts into the DB (or replace if already present) data for a
+		way-point at arbitrary position, also updating the player
+		attribute cache.
+
+		@param	player	the affected player
+		@param	wpIndex	the index (0 - 9) of the new way-point
+		@param	wpName	the name of the new way-point.
+	*/
 	static void setWp(Player player, int wpIdx, Vector3f pos, String wpName)
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx > Gps.MAX_WP)
@@ -204,7 +223,9 @@ public class Db
 			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpDel], wpIdx));
 		return ERROR_OK;
 	}
-/*
+
+/*	WAY-POINT SHARING HAS BEEN REMOVED
+
 	static int shareWp(Player player, int wpIdx)
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)

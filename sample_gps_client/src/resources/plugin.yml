@@ -1,0 +1,8 @@
+name: com.vms.SampleGpsClient
+main: com.vistamaresoft.sample_gps_client.SampleGpsClient
+version: 0.1.0
+author: Maurizio M. Gavioli aka Miwarre
+team: VistaMare Software
+description: "A simple plug-in exemplifying sending commands to the GPS plug-in."
+license: GNU General Public License ver. 3 or later
+website: http://www.vistamaresoft.com
