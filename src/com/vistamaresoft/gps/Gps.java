@@ -34,45 +34,45 @@ import net.risingworld.api.utils.Vector3f;
 public class Gps extends Plugin implements Listener
 {
 	// SETTINGS with their default values
-	public static final float	gpsXPosDef			= 0.5f;
-	public static final float	gpsHintYPos			= -0.25f;
-	public static final String	localeLanguageDef	= "en";
-	public static final int		wpNameDispLenDef	= 8;
-	public static final int		wpHdgPrecisDef		= 5;
+	static final float	gpsXPosDef			= 0.5f;
+	static final float	gpsHintYPos			= -0.25f;
+	static final String	localeLanguageDef	= "en";
+	static final int	wpNameDispLenDef	= 8;
+	static final int	wpHdgPrecisDef		= 5;
 
-	public static		String	commandPrefix		= "/gps";
-	public static		boolean	allowTpToWp			= false;	// whether teleporting to waypoints (in addition to home) is possible or not
-	public static		boolean	coordNativeFormat	= false;
-	public static		float	gpsYPos				= 0.1f;
-	public static		Locale	locale;
-	public static		int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
-	public static		int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
+	static	String	commandPrefix		= "/gps";
+	static	boolean	allowTpToWp			= false;	// whether teleporting to waypoints (in addition to home) is possible or not
+	static	boolean	coordNativeFormat	= false;
+	static	float	gpsYPos				= 0.1f;
+	static	Locale	locale;
+	static	int		wpDispLen			= wpNameDispLenDef;	// the max length of waypoint names to display on screen
+	static	int		wpHdgPrecis			= wpHdgPrecisDef;	// the waypoint radial delta below which route corrections arrows are not displayed
 
 	// KEYS FOR PLAYER ATTRIBUTES
-	public static final String	key_gpsShow			= "com.vms.gpsShow";
-	public static final String	key_gpsGUIcurrWp		= "com.vms.gpsGUIcurrWp";
-	public static final String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
-	public static final String	key_gpsLabel			= "com.vms.gpsLabel";
-	public static final String	key_gpsHint			= "com.vms.gpsHint";
-	public static final String	key_gpsTargetList	= "com.vms.gpsTargetList";
-	public static final String	key_gpsWpList		= "com.vms.gpsWpList";
-	public static final String	key_gpsWpShow		= "com.vms.gpsWpShow";
+	static final String	key_gpsShow			= "com.vms.gpsShow";
+	static final String	key_gpsGUIcurrWp	= "com.vms.gpsGUIcurrWp";
+	static final String	key_gpsHomeShow		= "com.vms.gpsHomeShow";
+	static final String	key_gpsLabel			= "com.vms.gpsLabel";
+	static final String	key_gpsHint			= "com.vms.gpsHint";
+	static final String	key_gpsTargetList	= "com.vms.gpsTargetList";
+	static final String	key_gpsWpList		= "com.vms.gpsWpList";
+	static final String	key_gpsWpShow		= "com.vms.gpsWpShow";
 
 	// CONSTANTS
-	public static final double	RAD2DEG			= 180.0 / Math.PI;
-	public static final String	VERSION			= "1.4.0";
-	public static final int		VERSION_INT		= 10400;
-	public static final	String	publicName		= "GPS";
-	public static final int		HOME_WP			= 0;			// the index of the home waypoint
-	public static final int		MAX_WP			= 15;			// the max waypoint index
-	public static final int		MIN_WP			= 0;			// the min waypoint index (including home)
-	public static final int		MIN_WP_PROPER	= 1;			// the min waypoint index (EXCLUDING home)
-	public static final int		TARGET_ID		= -1;			// the wp ID common to all targets
-	public static final float	TARGET_MIN_DIST	= 9;			// the distance (in blocks) below which a target has been reached
-	public static final int		FONT_SIZE		= 18;			// the size of the info window font
-	public static final int		HINT_SIZE		= 13;			// the size of the info window font
+	       static final	double	RAD2DEG			= 180.0 / Math.PI;
+	       static final	String	VERSION			= "1.4.0";
+	       static final	int		VERSION_INT		= 10400;
+	       static final	String	publicName		= "GPS";
+	public static final	int		HOME_WP			= 0;			// the index of the home waypoint
+	public static final	int		MAX_WP			= 15;			// the max waypoint index
+	public static final	int		MIN_WP			= 0;			// the min waypoint index (including home)
+	public static final	int		MIN_WP_PROPER	= 1;			// the min waypoint index (EXCLUDING home)
+	public static final	int		TARGET_ID		= -1;			// the wp ID common to all targets
+	       static final	float	TARGET_MIN_DIST	= 9;			// the distance (in blocks) below which a target has been reached
+	       static final	int		FONT_SIZE		= 18;			// the size of the info window font
+	       static final	int		HINT_SIZE		= 13;			// the size of the info window font
 
-	public static		Gps		plugin;
+	       static		Gps		plugin;
 	//------------------
 	// E V E N T S
 	//------------------
@@ -217,7 +217,7 @@ public class Gps extends Plugin implements Listener
 	/**
 		Toggles on/off the display of home way-point data
 
-		@param	player	the player for which to change the home display
+		@param	player	the player for whom to change the home display
 	*/
 	public void setShowHome(Player player)
 	{
@@ -229,7 +229,7 @@ public class Gps extends Plugin implements Listener
 		Controls the display of way-point data.
 
 		@param	player	the affected player.
-	 	@param	index	an integer from 1 to 9 to display the corresponding way-point
+	 	@param	index	an integer from 1 to 15 to display the corresponding way-point
 		*				or -1 to display next target point
 						or 0 to turn way-point display off
 	*/
@@ -274,14 +274,14 @@ public class Gps extends Plugin implements Listener
 	}
 
 	/**
-		Teleports to the index-th way-point.
+		Tele-transports to the index-th way-point.
 		The way-point must be defined and, if different from Home, teleport to
 		way-points must be enabled.
 
 	 	@param	player	the affected player.
 	 	@param	index	a int from 0 to 9 with the index of the way-point.
 	*/
-	void teleportToWp(Player player, Integer index)
+	public void teleportToWp(Player player, Integer index)
 	{
 		// check index is there and is legal
 		if (index == null || index < MIN_WP || index > MAX_WP)

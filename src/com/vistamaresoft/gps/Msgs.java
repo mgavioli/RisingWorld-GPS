@@ -20,39 +20,39 @@ import java.util.Locale;
 import java.util.Properties;
 //import java.util.ResourceBundle;
 
-public class Msgs
+class Msgs
 {
 	// TEXT IDENTIFIERS
-	public static final int	err_noTpToWp			= 0;
-	public static final int	err_showWpInvalidIndex	= 1;
-	public static final int	err_showWpUndefinedWp	= 2;
+	static final int	err_noTpToWp			= 0;
+	static final int	err_showWpInvalidIndex	= 1;
+	static final int	err_showWpUndefinedWp	= 2;
 
 	// Info messages
-	public static final int	msg_homeSet		= 3;
-	public static final int	msg_wpSet		= 4;
-	public static final int	msg_homeDel		= 5;
-	public static final int	msg_wpDel		= 6;
+	static final int	msg_homeSet		= 3;
+	static final int	msg_wpSet		= 4;
+	static final int	msg_homeDel		= 5;
+	static final int	msg_wpDel		= 6;
 
 	// Various texts
-	public static final int	txt_homeName	=  7;
-	public static final int	txt_undefined	=  8;
-	public static final int	txt_gpsHelpHint	=  9;
-	public static final int	txt_wpNameTitle	= 10;
-	public static final int	txt_wpNameCapt	= 11;
-	public static final int	txt_north		= 12;
-	public static final int	txt_east		= 13;
-	public static final int	txt_south		= 14;
-	public static final int	txt_west		= 15;
-//	public static final int	txt_wp_selector	= 16;
-//	public static final	int	txt_no_wp		= 16;
-//	public static final int	txt_share		= 18;
-//	public static final int	txt_wp_shared	= 19;
-//	public static final int	txt_wp_existed	= 20;
-//	public static final int	txt_error		= 17;
+	static final int	txt_homeName	=  7;
+	static final int	txt_undefined	=  8;
+	static final int	txt_gpsHelpHint	=  9;
+	static final int	txt_wpNameTitle	= 10;
+	static final int	txt_wpNameCapt	= 11;
+	static final int	txt_north		= 12;
+	static final int	txt_east		= 13;
+	static final int	txt_south		= 14;
+	static final int	txt_west		= 15;
+//	static final int	txt_wp_selector	= 16;
+//	static final	int	txt_no_wp		= 16;
+//	static final int	txt_share		= 18;
+//	static final int	txt_wp_shared	= 19;
+//	static final int	txt_wp_existed	= 20;
+//	static final int	txt_error		= 17;
 
 	private static final int	LAST_TEXT	= txt_west;
 
-	public static			String[]	msg			=
+	static			String[]	msg			=
 	{
 		"GPS goto: teleport to waypoints is disabled.",
 		"GPS goto/wp: waypoint index must be an integer between "+Gps.MIN_WP+" and "+Gps.MAX_WP,
@@ -80,7 +80,7 @@ public class Msgs
 
 	private static final	String		BUNDLE_NAME	= "/locale/messages";
 
-	public static boolean init(String path, Locale locale)
+	static boolean init(String path, Locale locale)
 	{
 		if (locale == null)
 			return false;

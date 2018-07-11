@@ -23,7 +23,7 @@ import net.risingworld.api.gui.GuiLabel;
 import net.risingworld.api.objects.Player;
 import net.risingworld.api.utils.ImageInformation;
 
-public class GpsGUI extends GuiDialogueBox
+class GpsGUI extends GuiDialogueBox
 {
 	// CONSTANTS
 	//

@@ -23,10 +23,10 @@ import net.risingworld.api.database.Database;
 import net.risingworld.api.objects.Player;
 import net.risingworld.api.utils.Vector3f;
 
-public class Db
+class Db
 {
 	// Globals
-	static	protected	Database	db	= null;
+	static	private					Database	db	= null;
 
 	public static final	int			ERROR_OK			= 0;
 	public static final	int			ERROR_DB			= -1;
@@ -168,10 +168,10 @@ public class Db
 		attribute cache.
 
 		@param	player	the affected player
-		@param	wpIndex	the index (0 - 9) of the new way-point
+		@param	wpIndex	the index (1 - 15) of the new way-point
 		@param	wpName	the name of the new way-point.
 	*/
-	static void setWp(Player player, int wpIndex, String wpName)
+	static public void setWp(Player player, int wpIndex, String wpName)
 	{
 		setWp(player, wpIndex, player.getPosition(), wpName);
 	}
@@ -182,10 +182,11 @@ public class Db
 		attribute cache.
 
 		@param	player	the affected player
-		@param	wpIndex	the index (0 - 9) of the new way-point
+		@param	wpIdx	the index (1 - 15) of the new way-point
+		@param	pos		the position to assign to the new way-point
 		@param	wpName	the name of the new way-point.
 	*/
-	static void setWp(Player player, int wpIdx, Vector3f pos, String wpName)
+	static public void setWp(Player player, int wpIdx, Vector3f pos, String wpName)
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx > Gps.MAX_WP)
 			return;
@@ -205,7 +206,7 @@ public class Db
 			player.sendTextMessage(String.format(Msgs.msg[Msgs.msg_wpSet], wpIdx, wpName));
 	}
 
-	static int deleteWp(Player player, int wpIdx)
+	static public int deleteWp(Player player, int wpIdx)
 	{
 		if (wpIdx < Gps.MIN_WP || wpIdx >= Gps.MAX_WP)
 			return ERROR_INVALIDARG;
