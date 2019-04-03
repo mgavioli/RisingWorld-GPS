@@ -14,6 +14,7 @@ package com.vistamaresoft.gps;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -111,7 +112,7 @@ public class Gps extends Plugin implements Listener
 	}
 
 	/** Called by Rising World when the player spawns into a world after having connected.
-	
+
 		@param	event	the spawn event
 	*/
 	@EventMethod
@@ -122,7 +123,7 @@ public class Gps extends Plugin implements Listener
 	}
 
 	/**	Called when the player issues a command ("/...") in the chat window
-	
+
 		@param event	the command event
 	*/
 	@EventMethod
@@ -441,13 +442,13 @@ public class Gps extends Plugin implements Listener
 			hint.setPivot(PivotPosition.Center);
 			hint.setFontSize(HINT_SIZE);
 			info.addChild(hint);
-	
+
 			// player attributes keeping track of status (whether the GPS data are shown or not
 			// and what they should contain)
 			player.setAttribute(key_gpsShow, true);			// whether the GPS text is shown or not
 			player.setAttribute(key_gpsHomeShow, false);	// whether the home info is shown or not
 			player.setAttribute(key_gpsWpShow, 0);			// which waypoint is shown, if any (0 = none)
-	
+
 			Db.loadPlayer(player);							// load player-dependent data
 			player.addGuiElement(info);
 			player.addGuiElement(hint);
@@ -466,7 +467,7 @@ public class Gps extends Plugin implements Listener
 		FileInputStream in;
 		try {
 			in = new FileInputStream(getPath() + "/settings.properties");
-			settings.load(in);
+			settings.load(new InputStreamReader(in, "UTF8"));
 			in.close();
 			// fill global values
 			commandPrefix	= "/" + settings.getProperty("command", commandPrefix);
