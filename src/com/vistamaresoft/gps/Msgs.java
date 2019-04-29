@@ -15,6 +15,7 @@ package com.vistamaresoft.gps;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Locale;
 //import java.util.MissingResourceException;
 import java.util.Properties;
@@ -96,7 +97,7 @@ class Msgs
 		try
 		{
 		in = new FileInputStream(path + fname);
-		settings.load(in);
+		settings.load(new InputStreamReader(in, "UTF8"));
 		in.close();
 		} catch (IOException e) {
 			System.out.println("** GPS plug-in ERROR: Property file '" + fname + "' for requested locale '"+ locale.toString() + "' not found. Defaulting to 'en'");
